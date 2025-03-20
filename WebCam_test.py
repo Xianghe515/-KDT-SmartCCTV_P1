@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 
 # Load the YOLO11 model
-model = YOLO("yolo11n.pt")
+model = YOLO("./yolo11/yolo11n.pt")
 
 # Export the model to NCNN format
 model.export(format="ncnn")  # creates '/yolo11n_ncnn_model'
@@ -30,9 +30,9 @@ def print_memory_usage():
 # YOLO 탐지 클래스
 class YOLODetector:
     def __init__(self, stream_url):
-        self.model_path = "yolo11n.pt"  # YOLO 모델 경로
+        self.model = "./yolo11/yolo11n.pt"  # YOLO 모델 경로
         self.stream_url = stream_url   # 라즈베리파이 MJPEG 스트림 URL
-        self.ncnn_model = YOLO(self.model_path)  # YOLO 모델 로드
+        self.ncnn_model = YOLO(self.model)  # YOLO 모델 로드
         self.cap = cv2.VideoCapture(self.stream_url)
 
         if not self.cap.isOpened():
