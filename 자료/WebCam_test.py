@@ -90,11 +90,10 @@ def processed_video_feed():
     def generate_frames():
         while True:
             frame = yolo_detector.get_processed_frame()
-            if frame is None:
+            if frame is None:       
                 break
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == "__main__":

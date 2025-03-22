@@ -1,0 +1,99 @@
+{% extends "server/base.html" %}
+{% block title %}사용자 신규 등록{% endblock %}
+{% block content %}
+<div class="mx-auto dt-auth-main">
+      <div class="card dt-auth-signup">
+            <header>사용자 신규 등록</header>
+            <section>
+<form
+      action="{{ url_for('auth.signup', next=request.args.get('next')) }}"
+      method="POST"
+      novalidate="novalidate"
+      class="form-signin"
+>
+{{ form.csrf_token }}
+      {% for message in get_flashed_messages() %}
+      <div class="dt-auth-flash">{{ message }}</div>
+      {% endfor %}
+    <div class="form-floating">
+        {{ form.user_name(size=30, class="form-control dt-auth-input", placeholder="사용자명") }}
+        <label for="floatingName">성명</label>
+       {% for error in form.user_name.errors %}
+       <span style="color: red">{{ error }}</span>
+       {% endfor %}
+    </div>
+    <div class="form-floating">
+        {{ form.email(class="form-control dt-auth-input", placeholder="메일 주소") }}
+        <label for="floatingEmail">이메일</label>
+       {% for error in form.email.errors %}
+       <span style="color: red">{{ error }}</span>
+       {% endfor %}
+    </div>
+    <div class="form-floating">
+        {{ form.password_hash(class="form-control dt-auth-input", placeholder="비밀번호") }}
+        <label for="floatingPassword">비밀번호</label>
+       {% for error in form.password_hash.errors %}
+       <span style="color: red">{{ error }}</span>
+       {% endfor %}
+    </div>
+    <div class="form-floating">
+        {{ form.device_id(class="form-control dt-auth-input", placeholder="장치 식별 번호") }}
+        <label for="floatingDeviceId">장치 식별 번호</label>
+        {% for error in form.device_id.errors %}
+        <span style="color: red">{{ error }}</span>
+        {% endfor %}
+    </div>
+    <div class="form-floating">
+        {{ form.birth_date(class="form-control dt-auth-input", placeholder="YYYY-MM-DD") }}
+        <label for="floatingBirthDate">생년월일(YYYY-MM-DD)</label>
+        {% for error in form.birth_date.errors %}
+        <!-- <span style="color: red">{{ error }}</span> -->
+        {% endfor %}
+    </div>
+    <div class="form-floating">
+        {{ form.phone_number(class="form-control dt-auth-input", id="phone_number", placeholder="000-0000-0000") }}
+        <label for="floatingPhoneNumber">전화번호(000-0000-0000)</label>
+        {% for error in form.phone_number.errors %}
+        <!-- <span style="color: red">{{ error }}</span> -->
+        {% endfor %}
+    </div>
+      {{ form.submit(class="btn btn-md btn-primary btn-block dt-auth-btn") }}
+    </form>
+</section>
+</div>
+</div>
+
+<script>
+      function formatPhoneNumber(input) {
+          let value = input.value.replace(/\D/g, ''); // 숫자만 남기기
+          if (value.length > 3 && value.length <= 7) {
+              input.value = value.slice(0, 3) + '-' + value.slice(3);
+          } else if (value.length > 7) {
+              input.value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7, 11);
+          } else {
+              input.value = value;
+          }
+      }
+      function formatBirthDate(input) {
+        let value = input.value.replace(/\D/g, ''); // 숫자만 남기기
+        if (value.length > 4 && value.length <= 6) {
+            input.value = value.slice(0, 4) + '-' + value.slice(4); // YYYY-MM
+        } else if (value.length > 6) {
+            input.value = value.slice(0, 4) + '-' + value.slice(4, 6) + '-' + value.slice(6, 8); // YYYY-MM-DD
+        } else {
+            input.value = value;
+        }
+    }
+
+      // 전화번호 입력 필드에 이벤트 리스너 추가
+      document.getElementById("phone_number").addEventListener("input", function () {
+          formatPhoneNumber(this);
+      });
+
+      // 생년월일 입력 필드에 이벤트 리스너 추가
+      document.getElementById("birth_date").addEventListener("input", function () {
+            formatBirthDate(this);
+      });
+
+</script>
+{% endblock %}

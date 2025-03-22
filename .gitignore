@@ -136,6 +136,9 @@ sample/
 yolo11n_ncnn_model/
 yolo11/
 보류/
+node_modules/
+package-lock.json
+package.json
 
 # Spyder project settings
 .spyderproject

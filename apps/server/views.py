@@ -1,6 +1,6 @@
 from flask import Flask, Blueprint, Response, render_template
 import cv2 as cv
-from Detector1 import YOLODetector
+from apps.Detector1 import YOLODetector
 
 streaming = Blueprint(
     "streaming",
@@ -13,7 +13,7 @@ yolo_detector = YOLODetector("http://192.168.10.250:8000/stream.mjpg")
 
 @streaming.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("server/index.html")
 
 @streaming.route("/video")
 def video():
@@ -32,5 +32,5 @@ def video():
 
 @streaming.route("/live")
 def streaming_page():
-    return render_template("live.html")
+    return render_template("server/live.html")
 
