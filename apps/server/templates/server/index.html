@@ -1,13 +1,25 @@
 {% extends "server/base.html" %}
 {% block title %}index{% endblock %}
 {% block content %}
-        <h1>index</h1>
-        <div class="form-floating mb-3">
-                <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
-                <label for="floatingInput">Email address</label>
-              </div>
-              <div class="form-floating">
-                <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
-                <label for="floatingPassword">Password</label>
-              </div>
+<div class="d-flex justify-content-around gap-3" style="margin-top: 16px;">
+  <!--스트리밍 테스트 카드-->
+    <div class="card" style="width: 18rem;">
+      <img src="{{ url_for('streaming.video_test') }}" class="card-img-top" alt="video_test">
+      <div class="card-body">
+        <h5 class="card-title">Streaming_Test</h5>
+        <p class="card-text">웹캠을 이용한 스트리밍 테스트</p>
+        <a href="http://127.0.0.1:5000/knockx2/live_test" class="btn btn-dark">보기</a>
+      </div>
+    </div>
+
+    <!--스트리밍 카드-->
+  <div class="card" style="width: 18rem;">
+    <img src="{{ url_for('streaming.video') }}" class="card-img-top" alt="video">
+    <div class="card-body">
+      <h5 class="card-title">Streaming</h5>
+      <p class="card-text">Streaming</p>
+      <a href="http://127.0.0.1:5000/knockx2/live" class="btn btn-dark">보기</a>
+    </div>
+  </div>
+</div>
 {% endblock %}

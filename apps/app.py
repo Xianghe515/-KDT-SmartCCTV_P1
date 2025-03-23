@@ -3,7 +3,12 @@ from flask_login import LoginManager  # type:ignore
 from flask_migrate import Migrate  # type:ignore
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect  # type:ignore
+import logging
 from apps.config import config
+
+log = logging.getLogger("werkzeug")
+log.disabled = True
+
 
 # Flask 확장 초기화
 db = SQLAlchemy()

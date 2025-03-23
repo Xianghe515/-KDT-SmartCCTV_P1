@@ -1,6 +1,6 @@
-{% extends "base.html" %}
+{% extends "server/base.html" %}
 {% block title %}Video Streaming{% endblock %}
 {% block content %}
 <h1>Video Streaming Page</h1>
-<img src="{{ url_for('streaming.video') }}" alt="Video Stream" width="640" height="480">
+<img src="{{ url_for('streaming.yolo_video') }}" class="rounded mx-auto d-block" alt="Video Stream" width="640" height="480">
 {% endblock %}

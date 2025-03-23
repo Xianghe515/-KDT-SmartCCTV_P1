@@ -41,7 +41,6 @@ input[type="search"] {
         margin-top: 10px;
 }
 .dt-auth-btn {
-    background-color: #212529;
     display: block;
     margin: 30px 0 0 0;
 }
@@ -77,7 +76,7 @@ input[type="search"] {
 .dt-image-submit {
     margin-left: 10px;
 }
-  
+
 .navbar-brand {
 display: flex;
 flex-direction: column;

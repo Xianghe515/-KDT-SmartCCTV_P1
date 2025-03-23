@@ -1,19 +1,28 @@
 from ultralytics import YOLO
 import cv2
 import numpy as np
+import logging
+
+
+# logging.getLogger("ultralytics").disabled = True  # YOLO 로깅 완전 비활성화
+logging.getLogger("ultralytics").setLevel(logging.CRITICAL)  # 최소 로그만 출력
+
+
 
 # YOLO 탐지 클래스
 class YOLODetector:
     def __init__(self, stream_url):
-        self.model = "./yolo11/yolo11n.pt"  # YOLO 모델 경로
         self.stream_url = stream_url   # 라즈베리파이 MJPEG 스트림 URL
-        self.ncnn_model = YOLO(self.model)  # YOLO 모델 로드
-        # self.cap = cv2.VideoCapture(self.stream_url)
+        # Load the YOLO11 model
+        self.model = YOLO("./yolo11/yolo11n.pt")
+        # Export the model to NCNN format
+        self.model.export(format="ncnn")  # creates '/yolo11n_ncnn_model'
+        # Load the exported NCNN model
+        self.ncnn_model = YOLO("./yolo11/yolo11n_ncnn_model")
 
         self.colors = np.random.uniform(0, 255, size=(len(self.ncnn_model.names), 3))  # 탐지 색상
 
     def get_processed_frame(self):
-        # print("stream url",self.stream_url)
         # 스트림에서 프레임 읽기
         cap = cv2.VideoCapture('http://192.168.10.250:8000/stream.mjpg')
 
@@ -49,6 +58,5 @@ class YOLODetector:
                     )
 
         _, buffer = cv2.imencode('.jpg', img)
-        print("Detector :",_)
         return buffer.tobytes()
     
