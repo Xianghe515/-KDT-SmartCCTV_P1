@@ -15,26 +15,26 @@ def index():
     return render_template("server/index.html")
 
 # YOLO 탐지기 초기화 (라즈베리파이 스트림 URL 지정)
-# cap_rpi = cv.VideoCapture("http://192.168.10.250:8000/stream.mjpg")
+cap_rpi = cv.VideoCapture("http://192.168.10.250:8000/stream.mjpg")
 yolo_detector = YOLODetector("http://192.168.10.250:8000/stream.mjpg")
 
-# @streaming.route("/video")
-# def video_test():
-#     # 웹캠 데이터를 스트림으로 송출
-#     def generate_frames():
-#         while True:
-#             ret, frame = cap_rpi.read()
-#             if not ret:
-#                 print("웹캠 프레임을 읽을 수 없습니다.")
-#                 break
-#             _, buffer = cv.imencode('.jpg', frame)
-#             frame_bytes = buffer.tobytes()
-#             yield (b'--frame\r\n'
-#                    b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-#     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+@streaming.route("/video")
+def video():
+    # 웹캠 데이터를 스트림으로 송출
+    def generate_frames():
+        while True:
+            ret, frame = cap_rpi.read()
+            if not ret:
+                print("웹캠 프레임을 읽을 수 없습니다.")
+                break
+            _, buffer = cv.imencode('.jpg', frame)
+            frame_bytes = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @streaming.route("/yolo_video")
-def video():
+def yolo_video():
     # 스트림으로 연산된 데이터를 전송
     def generate_frames():
         while True:

@@ -30,9 +30,9 @@
        {% endfor %}
     </div>
     <div class="form-floating">
-        {{ form.password_hash(class="form-control dt-auth-input", placeholder="비밀번호") }}
+        {{ form.password(class="form-control dt-auth-input", placeholder="비밀번호") }}
         <label for="floatingPassword">비밀번호</label>
-       {% for error in form.password_hash.errors %}
+       {% for error in form.password.errors %}
        <span style="color: red">{{ error }}</span>
        {% endfor %}
     </div>

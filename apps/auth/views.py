@@ -13,6 +13,7 @@ auth = Blueprint(
 )
 
 @auth.route("/")
+# @login_required
 def index():
       return render_template("auth/index.html")
 
@@ -34,20 +35,16 @@ def signup():
             user = User(
                   user_name=form.user_name.data,
                   email=form.email.data,
-                  password_hash=form.password_hash.data,
+                  password=form.password.data,
                   birth_date=birth_date,  # 변환된 생년월일 저장
                   phone_number=form.phone_number.data,
                   device_id=form.device_id.data,
             )
-            existing_user = User.query.filter_by(email=form.email.data).first()
-            if existing_user:
+            
+            # 이메일 중복 체크
+            if user.is_duplicate_email():
                   flash("지정 이메일 주소는 이미 등록되어 있습니다.")
                   return redirect(url_for("auth.signup"))
-            
-            # # 이메일 중복 체크
-            # if user.is_duplicate_email():
-            #       flash("지정 이메일 주소는 이미 등록되어 있습니다.")
-            #       return redirect(url_for("auth.signup"))
             
             # 사용자 정보 등록
             db.session.add(user)

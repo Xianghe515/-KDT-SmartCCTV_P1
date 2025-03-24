@@ -19,7 +19,7 @@ class SignUpForm(FlaskForm):
                   Email("메일 주소의 형식으로 입력해주세요."),
             ],
       )
-      password_hash = PasswordField(
+      password = PasswordField(
             "비밀번호",
             validators=[
                   DataRequired("비밀번호는 필수입니다.")

@@ -20,34 +20,11 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(100), nullable=False, unique=True, index=True)
     phone_number = db.Column(db.String(15))
     device_id = db.Column(db.String(100), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc)
-)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     def __repr__(self):
         return f"<User {self.user_id}>"
-
-# Videos 모델
-class Video(db.Model):
-    __tablename__ = "Videos"
-    video_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
-    user_id = db.Column(db.Integer, db.ForeignKey("Users.id", ondelete="CASCADE"))
-
-    def __repr__(self):
-        return f"<Video {self.video_id}>"
-
-# Logs 모델
-class Log(db.Model):
-    __tablename__ = "Logs"
-    log_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("Users.id"))
-    action = db.Column(db.String(255))
-    action_time = db.Column(db.DateTime, default=datetime.now(timezone.utc))
-
-    def __repr__(self):
-        return f"<Log {self.log_id}>"
-
-
+    
     # 비밀번호를 설정하기 위한 프로퍼티
     @property
     def password(self):
@@ -73,3 +50,25 @@ class Log(db.Model):
     
     # # backref를 이용하여 relation 정보를 설정
     # user_images = db.relationship("UserImage", backref="user")
+
+# Videos 모델
+class Video(db.Model):
+    __tablename__ = "Videos"
+    video_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    user_id = db.Column(db.Integer, db.ForeignKey("Users.id", ondelete="CASCADE"))
+
+    def __repr__(self):
+        return f"<Video {self.video_id}>"
+
+# Logs 모델
+class Log(db.Model):
+    __tablename__ = "Logs"
+    log_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("Users.id"))
+    action = db.Column(db.String(255))
+    action_time = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+
+    def __repr__(self):
+        return f"<Log {self.log_id}>"
+

@@ -41,7 +41,7 @@ class test_YOLODetector:
                 cls = box.cls[0].item()
                 class_name = self.ncnn_model.names[int(cls)]
 
-                if conf >= 0.60:  # 신뢰도 임계값
+                if conf >= 0.40:  # 신뢰도 임계값
                     color = self.colors[int(cls)]
                     cv2.rectangle(img, (int(x1), int(y1)), (int(x2), int(y2)), color, 3)
                     cv2.putText(
