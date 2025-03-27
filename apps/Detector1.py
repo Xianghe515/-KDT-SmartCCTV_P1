@@ -13,11 +13,11 @@ logging.getLogger("ultralytics").setLevel(logging.CRITICAL)  # 최소 로그만 
 class YOLODetector:
     def __init__(self, stream_url):
         self.stream_url = stream_url   # 라즈베리파이 MJPEG 스트림 URL
-        # Load the YOLO11 model
-        self.model = YOLO("./yolo11/yolo11n.pt")
-        # Export the model to NCNN format
-        self.model.export(format="ncnn")  # creates '/yolo11n_ncnn_model'
-        # Load the exported NCNN model
+        # # Load the YOLO11 model
+        # self.model = YOLO("./yolo11/yolo11n.pt")
+        # # Export the model to NCNN format
+        # self.model.export(format="ncnn")  # creates '/yolo11n_ncnn_model'
+        # # Load the exported NCNN model
         self.ncnn_model = YOLO("./yolo11/yolo11n_ncnn_model")
 
         self.colors = np.random.uniform(0, 255, size=(len(self.ncnn_model.names), 3))  # 탐지 색상

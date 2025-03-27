@@ -9,7 +9,6 @@ streaming = Blueprint(
     template_folder="templates",
 )
 
-
 @streaming.route("/")
 def index():
     return render_template("server/index.html")

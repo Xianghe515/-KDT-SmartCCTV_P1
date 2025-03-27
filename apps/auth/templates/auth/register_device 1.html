@@ -1,0 +1,58 @@
+{% extends "server/base.html" %}
+{% block title %}기기 등록{% endblock %}
+{% block content %}
+<div class="mx-auto dt-auth-main">
+    <div class="card dt-auth">
+        <header>기기 등록</header>
+        <section>
+            <form action="{{ url_for('auth.register_device', user_id=current_user.id) }}"
+                  method="POST"
+                  novalidate="novalidate"
+                  class="form-signin">
+
+                {{ form.csrf_token }}
+                {% for message in get_flashed_messages() %}
+                <div class="dt-auth-flash">{{ message }}</div>
+                {% endfor %}
+
+                <div id="deviceContainer">
+                    {% for device_form in form.devices %}
+                    <div class="device-entry">
+                        <div class="form-floating">
+                            {{ device_form.device_id(class="form-control dt-auth-input", value=device_form.device_id.data or '', placeholder="일련번호") }}
+                            <label>일련번호</label>
+                        </div>
+                        <div class="form-floating ip-container">
+                            {{ device_form.ip_address_1(class="form-control dt-auth-input ip-segment", value=device_form.device_id.data or '', maxlength="3", placeholder="") }}
+                            <span>.</span>
+                            {{ device_form.ip_address_2(class="form-control dt-auth-input ip-segment", maxlength="3", placeholder="") }}
+                            <span>.</span>
+                            {{ device_form.ip_address_3(class="form-control dt-auth-input ip-segment", maxlength="3", placeholder="") }}
+                            <span>.</span>
+                            {{ device_form.ip_address_4(class="form-control dt-auth-input ip-segment", maxlength="3", placeholder="") }}
+                            <label style="top: 9.8px;">IP</label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="btn_position">
+                    {% if device_count >= 3 %}
+                    <button type="button" name="add_device" class="btn btn-md btn-dark btn-block dt-auth-btn" style="margin-right: 10px;" disabled>추가</button>
+                    {% else %}
+                    <button type="submit" name="add_device" class="btn btn-md btn-dark btn-block dt-auth-btn" style="margin-right: 10px;" >추가</button>
+                    {% endif %}
+                    
+                    <!-- {% if device_count <= 1 %}
+                    <button type="button" name="delete_device" class="btn btn-md btn-dark btn-block dt-auth-btn" style="margin-right: 10px;" disabled>삭제</button>
+                    {% else %}
+                    <button type="submit" name="delete_device" class="btn btn-md btn-dark btn-block dt-auth-btn" style="margin-right: 10px;" >삭제</button>
+                    {% endif %} -->
+
+                    {{ form.submit(class="btn btn-md btn-dark btn-block dt-auth-btn") }}
+                </div>
+            </form>
+        </section>
+    </div>
+</div>
+{% endblock %}

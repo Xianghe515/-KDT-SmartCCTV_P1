@@ -1,0 +1,109 @@
+{% extends "server/base.html" %}
+  {% block content %}
+<div class="mx-auto dt-auth-main">
+<div class="card dt-auth">
+<header>회원 정보 수정</header>
+<section>
+    <form
+    action="{{ url_for('auth.update', user_id=current_user.id) }}"
+    method="POST"
+    novalidate="novalidate"
+    class="g-3 needs-validation"
+  >
+    {{ form.csrf_token }}
+    {% for message in get_flashed_messages() %}
+    <div class="dt-auth-flash">{{ message }}</div>
+    {% endfor %}
+    
+    <div class="form-floating">
+        <input type="text" class="form-control dt-auth-input {% if form.user_name.errors %}is-invalid{% elif form.user_name.data %}is-valid{% endif %}" 
+               id="floatingUsername" name="user_name" value="{{ current_user.user_name }}">
+        <label for="floatingUsername">이름</label>
+        {% if form.user_name.errors %}
+            <div class="invalid-feedback">
+                {{ form.user_name.errors[0] }}
+            </div>
+        {% else %}
+            <div class="valid-feedback">
+            </div>
+        {% endif %}
+    </div>
+
+<div class="form-floating">
+        <input type="email" class="form-control dt-auth-input" 
+        name="email" value="{{ current_user.email }}" style="background-color: #e9ecef" disabled>
+        <label for="floatingEmail">이메일</label>
+            </div>
+    
+                <div class="form-floating">
+                    <input type="text" class="form-control dt-auth-input {% if form.phone_number.errors %}is-invalid{% elif form.phone_number.data %}is-valid{% endif %}" 
+                           id="phone_number" name="phone_number" value="{{ current_user.phone_number if current_user.phone_number is not none }}" placeholder="000-0000-0000">
+                    <label for="phone_number">전화번호</label>
+                    {% if form.phone_number.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.phone_number.errors[0] }}
+                        </div>
+                    {% elif form.phone_number.data %}
+                        <div class="valid-feedback">
+                        </div>
+                    {% endif %}
+                </div>
+    
+                <div class="form-floating">
+                    <input type="text" class="form-control dt-auth-input {% if form.birth_date.errors %}is-invalid{% elif form.birth_date.data %}is-valid{% endif %}" 
+                           id="birth_date" name="birth_date" value="{{ current_user.birth_date if current_user.birth_date is not none }}" placeholder="YYYY-MM-DD">
+                    <label for="birth_date">생년월일</label>
+                    {% if form.birth_date.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.birth_date.errors[0] }}
+                        </div>
+                    {% elif form.birth_date.data %}
+                        <div class="valid-feedback">
+                        </div>
+                    {% endif %}
+                </div>
+    
+    
+    <div class="btn_position">
+        {{ form.submit(class="btn btn-md btn-dark btn-block dt-auth-btn") }}
+    </div>
+</form>
+</section>
+</div>
+</div>
+
+
+<script>
+      function formatPhoneNumber(input) {
+          let value = input.value.replace(/\D/g, ""); // 숫자만 남기기
+          if (value.length > 3 && value.length <= 7) {
+              input.value = value.slice(0, 3) + "-" + value.slice(3);
+          } else if (value.length > 7) {
+              input.value = value.slice(0, 3) + "-" + value.slice(3, 7) + "-" + value.slice(7, 11);
+          } else {
+              input.value = value;
+          }
+      }
+      function formatBirthDate(input) {
+        let value = input.value.replace(/\D/g, ""); // 숫자만 남기기
+        if (value.length > 4 && value.length <= 6) {
+            input.value = value.slice(0, 4) + "-" + value.slice(4); // YYYY-MM
+        } else if (value.length > 6) {
+            input.value = value.slice(0, 4) + "-" + value.slice(4, 6) + "-" + value.slice(6, 8); // YYYY-MM-DD
+        } else {
+            input.value = value;
+        }
+    }
+
+      // 전화번호 입력 필드에 이벤트 리스너 추가
+      document.getElementById("phone_number").addEventListener("input", function () {
+          formatPhoneNumber(this);
+      });
+
+      // 생년월일 입력 필드에 이벤트 리스너 추가
+      document.getElementById("birth_date").addEventListener("input", function () {
+            formatBirthDate(this);
+      });
+
+</script>
+{% endblock %}

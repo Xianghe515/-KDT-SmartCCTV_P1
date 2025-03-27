@@ -1,0 +1,154 @@
+{% extends "server/base.html" %}
+{% block title %}기기 등록{% endblock %}
+{% block content %}
+<div class="mx-auto dt-auth-main">
+<div class="card dt-auth">
+<header>기기 등록</header>
+<section>
+<form action="{{ url_for('auth.register_device', user_id=current_user.id) }}"
+        method="POST"
+        novalidate="novalidate"
+        class="form-signin">
+
+    {{ form.csrf_token }}
+    <!-- {% for message in get_flashed_messages() %}
+        <div class="dt-auth-flash">{{ message }}</div>
+    {% endfor %} -->
+
+    <div id="deviceContainer">
+        {% for device_form in form.devices %}
+            <div class="device-entry">
+                <div class="form-floating">
+                    <input type="text"
+                            class="form-control dt-auth-input {% if device_form.device_id.errors %}is-invalid{% elif device_form.device_id.data %}is-valid{% endif %}"
+                            id="{{ device_form.device_id.id }}"
+                            name="{{ device_form.device_id.name }}"
+                            placeholder="일련번호"
+                            value="{{ device_form.device_id.data or '' }}">
+                    <label for="{{ device_form.device_id.id }}">일련번호</label>
+                    {% if device_form.device_id.errors %}
+                        <div class="invalid-feedback">
+                            {{ device_form.device_id.errors[0] }}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="form-floating ip-container">
+                    <input type="text"
+                            class="form-control dt-auth-input ip-segment {% if device_form.ip_address_1.errors %}is-invalid-device{% elif device_form.ip_address_1.data %}is-valid-device{% endif %}"
+                            maxlength="3"
+                            id="{{ device_form.ip_address_1.id }}"
+                            name="{{ device_form.ip_address_1.name }}"
+                            placeholder=""
+                            value="{{ device_form.ip_address_1.data or '' }}">
+                    <span>.</span>
+                    <input type="text"
+                            class="form-control dt-auth-input ip-segment {% if device_form.ip_address_2.errors %}is-invalid-device{% elif device_form.ip_address_2.data %}is-valid-device{% endif %}"
+                            maxlength="3"
+                            id="{{ device_form.ip_address_2.id }}"
+                            name="{{ device_form.ip_address_2.name }}"
+                            placeholder=""
+                            value="{{ device_form.ip_address_2.data or '' }}">
+                    <span>.</span>
+                    <input type="text"
+                            class="form-control dt-auth-input ip-segment {% if device_form.ip_address_3.errors %}is-invalid-device{% elif device_form.ip_address_3.data %}is-valid-device{% endif %}"
+                            maxlength="3"
+                            id="{{ device_form.ip_address_3.id }}"
+                            name="{{ device_form.ip_address_3.name }}"
+                            placeholder=""
+                            value="{{ device_form.ip_address_3.data or '' }}">
+                    <span>.</span>
+                    <input type="text"
+                            class="form-control dt-auth-input ip-segment {% if device_form.ip_address_4.errors %}is-invalid-device{% elif device_form.ip_address_4.data %}is-valid-device{% endif %}"
+                            maxlength="3"
+                            id="{{ device_form.ip_address_4.id }}"
+                            name="{{ device_form.ip_address_4.name }}"
+                            placeholder=""
+                            value="{{ device_form.ip_address_4.data or '' }}">
+                    <label style="top: 9.8px;">IP</label>
+                    {% if device_form.ip_address_1.errors %}
+                        <div class="invalid-feedback">
+                            {{ device_form.ip_address_1.errors[0] }}
+                        </div>
+                    {% elif device_form.ip_address_2.errors %}
+                        <div class="invalid-feedback">
+                            {{ device_form.ip_address_2.errors[0] }}
+                        </div>
+                    {% elif device_form.ip_address_3.errors %}
+                        <div class="invalid-feedback">
+                            {{ device_form.ip_address_3.errors[0] }}
+                        </div>
+                    {% elif device_form.ip_address_4.errors %}
+                        <div class="invalid-feedback">
+                            {{ device_form.ip_address_4.errors[0] }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="btn_position">
+        {% if device_count <= 1 %}
+        <button type="button" name="delete_device" class="btn btn-md btn-dark btn-block dt-auth-btn" style="margin-right: 10px;" disabled>삭제</button>
+        {% else %}
+        <button type="submit" name="delete_device" class="btn btn-md btn-dark btn-block dt-auth-btn" style="margin-right: 10px;" >삭제</button>
+        {% endif %}
+
+        {% if form.devices|length >= 3 %}
+            <button type="button" name="add_device" class="btn btn-md btn-dark btn-block dt-auth-btn" style="margin-right: 10px;" disabled>추가</button>
+        {% else %}
+            <button type="submit" name="add_device" class="btn btn-md btn-dark btn-block dt-auth-btn" style="margin-right: 10px;">추가</button>
+        {% endif %}
+
+        {{ form.submit(class="btn btn-md btn-dark btn-block dt-auth-btn") }}
+    </div>
+</form>
+</section>
+</div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // ✅ 일련번호 자동 "-" 추가
+    document.querySelectorAll("input[name$='device_id']").forEach(input => {
+        input.addEventListener("input", function (event) {
+            let cursorPos = this.selectionStart;
+            let value = this.value.replace(/[^a-zA-Z0-9]/g, ""); // 특수문자 제거
+            let formattedValue = "";
+
+            if (value.length > 4) {
+                formattedValue = value.slice(0, 4) + "-" + value.slice(4, 8);
+            } else {
+                formattedValue = value;
+            }
+
+            let prevLength = this.value.length;
+            this.value = formattedValue;
+
+            // '-'가 추가될 때 커서 이동을 조정
+            if (prevLength < this.value.length && cursorPos === 5) {
+                this.setSelectionRange(cursorPos + 1, cursorPos + 1);
+            } else {
+                this.setSelectionRange(cursorPos, cursorPos);
+            }
+        });
+    });
+    
+        // IP 입력 시 자동 포커스 이동
+        document.querySelectorAll(".ip-segment").forEach((input, index, inputs) => {
+            input.addEventListener("input", function () {
+                if (this.value.length === 3 && index < inputs.length - 1) {
+                    inputs[index + 1].focus(); // 다음 칸으로 이동
+                }
+            });
+    
+            input.addEventListener("keydown", function (event) {
+                if (event.key === "Backspace" && this.value.length === 0 && index > 0) {
+                    inputs[index - 1].focus(); // 이전 칸으로 이동
+                }
+            });
+        });
+    });
+    </script>
+    
+{% endblock %}

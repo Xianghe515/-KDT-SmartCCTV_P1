@@ -19,11 +19,11 @@ class User(db.Model, UserMixin):
     birth_date = db.Column(db.Date)
     email = db.Column(db.String(100), nullable=False, unique=True, index=True)
     phone_number = db.Column(db.String(15))
-    device_id = db.Column(db.String(100), nullable=False)
+    # device_id = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     def __repr__(self):
-        return f"<User {self.user_id}>"
+        return f"<User {self.id}>"
     
     # 비밀번호를 설정하기 위한 프로퍼티
     @property
@@ -41,7 +41,8 @@ class User(db.Model, UserMixin):
     
     # 이메일 주소 중복 체크
     def is_duplicate_email(self):
-        return User.query.filter_by(email=self.email).first()is not None
+        duplicate_user = User.query.filter_by(email=self.email).first()
+        return duplicate_user is not None and duplicate_user.id != self.id
     
     # 로그인하고 있는 사용자 정보 취득
     @login_manager.user_loader
@@ -54,6 +55,7 @@ class User(db.Model, UserMixin):
 # Videos 모델
 class Video(db.Model):
     __tablename__ = "Videos"
+
     video_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     user_id = db.Column(db.Integer, db.ForeignKey("Users.id", ondelete="CASCADE"))
@@ -64,6 +66,7 @@ class Video(db.Model):
 # Logs 모델
 class Log(db.Model):
     __tablename__ = "Logs"
+
     log_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey("Users.id"))
     action = db.Column(db.String(255))
@@ -71,4 +74,16 @@ class Log(db.Model):
 
     def __repr__(self):
         return f"<Log {self.log_id}>"
+    
+class Camera(db.Model):
+    __tablename__ = "Cameras"
 
+    camera_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("Users.id", ondelete="CASCADE"))
+    device_id = db.Column(db.String(255), nullable=False)
+    ip_address = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    
+    def is_duplicate_device_id(self):
+        duplicateDeviceId = Camera.query.filter_by(device_id=self.device_id).first()
+        return duplicateDeviceId is not None and duplicateDeviceId.device_id != self.device_id

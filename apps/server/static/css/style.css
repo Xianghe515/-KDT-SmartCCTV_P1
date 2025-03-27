@@ -11,7 +11,7 @@ input[type="search"] {
     width: 400px;
     margin-top: 45px;
 }
-.dt-auth-main .card {
+.card {
     box-shadow: 0 12px 18px 2px rgba(34, 0, 51, 0.04), 0 6px 22px 4px
     rgba(7, 48, 114, 0.12),
     0 6px 10px -4px rgba(14, 13, 26, 0.12) !important;
@@ -35,7 +35,7 @@ input[type="search"] {
 }
 .dt-auth-flash {
     font-size: 14px;
-    color: #9c1a1c;
+    color: #bf3644;
 }
 .dt-auth-input {
         margin-top: 10px;
@@ -101,9 +101,82 @@ left: 56px;
 fill: #BF3131;
 }
 
+.log-out {
+    fill: black;
+}
+
 .knockx2 {
 position:absolute;
 top: -6px;
 left: 0;
 color: #EEEEEE
+}
+.btn_position {
+    display: flex;
+    justify-content: end;
+  }
+  .signup_birth_date label:last-of-type {
+    top: 3px;
+    left: 66%;
+    font-size: 0.75em; /* 크기 조정 */
+    color: gray; /* 색상 조정 */
+}
+
+.is-invalid {
+    border-color: #bf3644 !important;
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0icmVkIiBjbGFzcz0iYmkgYmktZXhjbGFtYXRpb24tY2lyY2xlIiB2aWV3Qm94PSIwIDAgMTYgMTYiPiA8cGF0aCBkPSJNNy45MzggMi4wMTZhLjEzLjEzIDAgMCAxIC4xMjUgMCAuMDIuMDExLjAzNi4wMjcuMDQ1LjA0Ny4wMDkuMDIuMDEyLjA0My4wMDcuMDY1TDcuNTIgNi42NzVoLjk2bC0uNDE3IDQuMjY1YS4xMTUuMTE1IDAgMCAxLS4wNDUuMDgyLjA5My4wOTMgMCAwIDEtLjA4IDAgLjExNS4xMTUgMCAwIDEtLjA0NS0uMDgyTDcuNTIgNi42NzVoLjk2bC0uNDE3IDQuMjY1YS4xMTUuMTE1IDAgMCAxLS4wNDUuMDgyLjA5My4wOTMgMCAwIDEtLjA4IDAgLjExNS4xMTUgMCAwIDEtLjA0NS0uMDgybC0uNDE3LTQuMjY1aC45Nkw3LjkzOCAyLjAxNnoiLz48cGF0aCBkPSJNOSA5YTEgMSAwIDEgMCAwIDIgMSAxIDAgMCAwIDAtMnoiLz48L3N2Zz4=');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 18px;
+}
+
+.is-invalid-device {
+    border-color: #bf3644 !important;
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 18px;
+}
+
+
+.is-valid {
+    border-color: #28a745 !important;
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgZmlsbD0iZ3JlZW4iIGNsYXNzPSJiaSBiaS1jaGVjay1jaXJjbGUiIHZpZXdCb3g9IjAgMCAxNiAxNiI+IDxwYXRoIGQ9Ik0xNiA4QTggOCAwIDEgMSAwIDhhOCA4IDAgMCAxIDE2IDB6TTYuOTMgMTAuOTdhLjc1Ljc1IDAgMCAwIDEuMDggMGwzLjUtMy41YS43NS43NSAwIDEgMC0xLjA2LTEuMDZMNy41IDkuNDQgNS41NiA3LjVhLjc1Ljc1IDAgMSAwLTEuMDYgMS4wNmwyLjQzIDIuNDN6Ii8+PC9zdmc+');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 18px;
+}
+
+.is-valid-device {
+    border-color: #28a745 !important;
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 18px;
+}
+
+.is-invalid,
+.is-valid {
+    padding-right: 40px !important;
+}
+
+.is-invalid_login {
+    border-color: #bf3644 !important;
+    background-repeat: no-repeat;
+}
+
+.ip-container {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.ip-segment {
+    text-align: center;
+    height: 50px;
+    padding-left: 10px;
+}
+
+.ip-container span {
+    font-weight: bold;
+    padding-top:  19px;
+    line-height: 50px; /* 입력칸 높이에 맞춰 정렬 */
 }

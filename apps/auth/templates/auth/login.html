@@ -2,7 +2,7 @@
 {% block title%}로그인{% endblock %}
 {% block content%}
 <div class="mx-auto dt-auth-main">
-      <div class="card dt-auth-login">
+      <div class="card dt-auth-login {% if get_flashed_messages() %}is-invalid_login{% endif %}">
             <header>로그인</header>
             <section>
 
@@ -15,24 +15,35 @@
       {% endfor %}
       {{ form.csrf_token}}
       
+
       <div class="form-floating">
-            {{ form.email(class="form-control dt-auth-input", placeholder="") }}
-            <label for="floatingInput">이메일</label>
-            {% for error in form.email.errors%}
-            <span style="color:red;">{{ error }}</span>
-            {% endfor %}
-      </div>
-      
-      <div class="form-floating">
-            {{ form.password(class="form-control dt-auth-input", placeholder="") }}
+            <input type="email" class="form-control dt-auth-input {% if form.email.errors %}is-invalid{% elif form.email.data %}is-valid{% endif %}" 
+                   id="floatingEmail" name="email" value="{{ form.email.data or ''}}" placeholder="">
+            <label for="floatingEmail">이메일</label>
+            {% if form.email.errors %}
+                <div class="invalid-feedback">
+                    {{ form.email.errors[0] }}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="form-floating">
+            <input type="password" class="form-control dt-auth-input {% if form.password.errors %}is-invalid{% endif %}" 
+                   id="floatingPassword" name="password" placeholder="">
             <label for="floatingPassword">비밀번호</label>
-            {% for error in form.password.errors %}
-            <span style="color:red;">{{ error }}</span>
-            {% endfor %}
-      </div>
+            {% if form.password.errors %}
+                <div class="invalid-feedback">
+                    {{ form.password.errors[0] }}
+                </div>
+            {% elif form.password.data %}
+                <div class="valid-feedback">
+                </div>
+            {% endif %}
+        </div>
 
-
+      <div class="btn_position">
       {{ form.submit(class="btn btn-md btn-dark btn-block dt-auth-btn") }}
+      </div>
 </form>
 </section>
 </div>

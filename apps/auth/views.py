@@ -1,10 +1,11 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
-from flask_login import login_user, logout_user  # type: ignore
+from flask_login import login_user, logout_user, login_required   # type: ignore
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from apps.app import db
-from apps.auth.forms import LoginForm, SignUpForm
-from apps.auth.models import User
+from apps.auth.forms import LoginForm, SignUpForm, UpdateForm, PasswordForm, DeviceForm, SingleDeviceForm
+from apps.auth.models import User, Camera
 
 auth = Blueprint(
       "auth",
@@ -13,7 +14,6 @@ auth = Blueprint(
 )
 
 @auth.route("/")
-# @login_required
 def index():
       return render_template("auth/index.html")
 
@@ -38,7 +38,7 @@ def signup():
                   password=form.password.data,
                   birth_date=birth_date,  # 변환된 생년월일 저장
                   phone_number=form.phone_number.data,
-                  device_id=form.device_id.data,
+                  # device_id=form.device_id.data,
             )
             
             # 이메일 중복 체크
@@ -56,8 +56,8 @@ def signup():
             # GET 파라미터에 next 키가 존재하고, 값이 없는 경우 사용자의 일람 페이지로 리다이렉트
             next_ = request.args.get("next")
             if next_ is None or not next_.startswith("/"):
-                  # 회원가입 완료 시 리다이렉트될 곳 -> streaming.index
-                  next_ = url_for("auth.login")
+                  # 회원가입 완료 시 리다이렉트될 곳 -> auth.index
+                  next_ = url_for("streaming.index")
                   return redirect(next_)
       
       return render_template("auth/signup.html", form=form)
@@ -78,6 +78,136 @@ def login():
             flash("메일 주소 또는 비밀번호가 일치하지 않습니다.")
             
       return render_template("auth/login.html", form=form)
+
+@auth.route("/<user_id>")
+@login_required
+def info(user_id):
+      form = UpdateForm()
+      user = User.query.get(user_id)
+      
+      return render_template("auth/info.html", form=form, user=user)
+
+@auth.route("/<user_id>/update", methods=["GET", "POST"])
+@login_required
+def update(user_id):
+      form = UpdateForm()
+      user = User.query.get(user_id)
+
+      if form.validate_on_submit():  # 폼 제출 및 유효성 검증
+            user.user_name = form.user_name.data
+            user.phone_number = form.phone_number.data
+            user.birth_date = form.birth_date.data or None
+            
+            db.session.commit()
+            # 수정 후 info 페이지로 리다이렉트
+            return redirect(url_for("auth.info", user_id=user.id))  # user.id로 user_id를 전달
+
+      return render_template("auth/update.html", user=user, form=form)
+
+@auth.route("/<user_id>/modify_pw", methods=["GET", "POST"])
+@login_required
+def modify_pw(user_id):
+      form = PasswordForm()
+      user = User.query.get(user_id)
+      if not user:
+            flash("해당 사용자를 찾을 수 없습니다.")
+            return redirect(url_for("auth.info", user_id=user_id))  # 이 부분에서 user_id를 제대로 전달
+
+      if form.validate_on_submit():  # 폼 제출 및 유효성 검증
+            user.password = form.current_password.data
+            
+            # 현재 비밀번호 확인
+            if not check_password_hash(user.password_hash, form.current_password.data):
+                  flash("현재 비밀번호가 일치하지 않습니다.")
+                  return render_template("auth/modify_pw.html", user=user, form=form)
+
+            # 비밀번호 업데이트
+            else:
+                  user.password = form.new_password.data
+                  user.password_hash = generate_password_hash(form.new_password.data)
+
+                  db.session.commit()
+
+        # 수정 후 info 페이지로 리다이렉트
+            return redirect(url_for("auth.info", user_id=user.id))  # user.id로 user_id를 전달
+
+      return render_template("auth/modify_pw.html", user=user, form=form)
+
+@auth.route("/users/<user_id>/register_device", methods=["GET", "POST"])
+@login_required
+def register_device(user_id):
+    user = User.query.get(user_id)
+    cameras = Camera.query.filter_by(user_id=user_id).all()
+    form = DeviceForm(devices=[{'device_id': cam.device_id, 
+                                'ip_address_1': cam.ip_address.split('.')[0],
+                                'ip_address_2': cam.ip_address.split('.')[1],
+                                'ip_address_3': cam.ip_address.split('.')[2],
+                                'ip_address_4': cam.ip_address.split('.')[3]} for cam in cameras])
+    device_count = len(form.devices)  # 현재 장치 수 계산
+    if "add_device" in request.form:
+            form.devices.append_entry()
+            return render_template("auth/register_device.html", form=form, user=user, device_count=device_count + 1)  # 폼 추가 후 페이지 다시 렌더링
+    if "delete_device" in request.form:
+            form.devices.pop_entry()
+            return render_template("auth/register_device.html", form=form, user=user, device_count=device_count - 1)  # 폼 삭제 후 페이지 다시 렌더링
+      
+#     form = DeviceForm()
+
+#     if cameras:
+#         for i, camera in enumerate(cameras):
+#             if i < len(form.devices):
+#                 form.devices[i].device_id.data = camera.device_id
+#                 ip_parts = camera.ip_address.split('.')
+#                 form.devices[i].ip_address_1.data = ip_parts[0]
+#                 form.devices[i].ip_address_2.data = ip_parts[1]
+#                 form.devices[i].ip_address_3.data = ip_parts[2]
+#                 form.devices[i].ip_address_4.data = ip_parts[3]
+#             else:
+#                 new_device_form = SingleDeviceForm()
+#                 new_device_form.device_id.data = camera.device_id
+#                 ip_parts = camera.ip_address.split('.')
+#                 new_device_form.ip_address_1.data = ip_parts[0]
+#                 new_device_form.ip_address_2.data = ip_parts[1]
+#                 new_device_form.ip_address_3.data = ip_parts[2]
+#                 new_device_form.ip_address_4.data = ip_parts[3]
+#                 form.devices.append_entry(new_device_form)
+
+
+    if form.validate_on_submit():  # 폼 유효성 검증
+        
+        if "add_device" in request.form:
+            form.devices.append_entry()
+            return render_template("auth/register_device.html", form=form, user=user, device_count=device_count + 1)  # 폼 추가 후 페이지 다시 렌더링
+        else:
+            for device_form in form.devices:
+                full_ip = device_form.get_full_ip()
+                device_id = device_form.device_id.data
+
+                existing_device = Camera.query.filter_by(device_id=device_id).all()
+                if existing_device and existing_device not in cameras:
+                    flash(f"이미 등록된 일련번호({device_id})입니다.", "danger")
+                    continue
+
+                cam = Camera(device_id=device_id, user_id=user.id, ip_address=full_ip)
+                if existing_device and existing_device in cameras:
+                    existing_device.ip_address = full_ip
+                    existing_device.device_id = device_id
+                else:
+                    db.session.add(cam)
+
+            db.session.commit()
+            # flash("기기 등록이 완료되었습니다.", "success")
+            return render_template("auth/register_device.html", form=form, user=user, device_count=device_count)
+        
+    else:
+        if request.method == "POST":
+            for field, errors in form.errors.items():
+                for error in errors:
+                    flash(f"{getattr(form, field).label.text}: {error}", "danger")
+
+    return render_template("auth/register_device.html", form=form, user=user, device_count=device_count)
+
+
 
 # 로그아웃 엔드포인트
 @auth.route("/logout")
