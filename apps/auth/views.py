@@ -150,28 +150,6 @@ def register_device(user_id):
     if "delete_device" in request.form:
             form.devices.pop_entry()
             return render_template("auth/register_device.html", form=form, user=user, device_count=device_count - 1)  # 폼 삭제 후 페이지 다시 렌더링
-      
-#     form = DeviceForm()
-
-#     if cameras:
-#         for i, camera in enumerate(cameras):
-#             if i < len(form.devices):
-#                 form.devices[i].device_id.data = camera.device_id
-#                 ip_parts = camera.ip_address.split('.')
-#                 form.devices[i].ip_address_1.data = ip_parts[0]
-#                 form.devices[i].ip_address_2.data = ip_parts[1]
-#                 form.devices[i].ip_address_3.data = ip_parts[2]
-#                 form.devices[i].ip_address_4.data = ip_parts[3]
-#             else:
-#                 new_device_form = SingleDeviceForm()
-#                 new_device_form.device_id.data = camera.device_id
-#                 ip_parts = camera.ip_address.split('.')
-#                 new_device_form.ip_address_1.data = ip_parts[0]
-#                 new_device_form.ip_address_2.data = ip_parts[1]
-#                 new_device_form.ip_address_3.data = ip_parts[2]
-#                 new_device_form.ip_address_4.data = ip_parts[3]
-#                 form.devices.append_entry(new_device_form)
-
 
     if form.validate_on_submit():  # 폼 유효성 검증
         
@@ -206,8 +184,6 @@ def register_device(user_id):
                     flash(f"{getattr(form, field).label.text}: {error}", "danger")
 
     return render_template("auth/register_device.html", form=form, user=user, device_count=device_count)
-
-
 
 # 로그아웃 엔드포인트
 @auth.route("/logout")

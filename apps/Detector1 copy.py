@@ -1,3 +1,5 @@
+from flask_login import current_user
+
 from ultralytics import YOLO
 import cv2 as cv
 import numpy as np
@@ -20,7 +22,7 @@ class YOLODetector:
     def get_processed_frame(self):
         # 스트림에서 프레임 읽기
 
-        cap = cv.VideoCapture()
+        cap = cv.VideoCapture("http://192.168.10.250:8000/")
 
         if not cap.isOpened():
             raise ValueError("라즈베리파이 스트림을 열 수 없습니다. URL을 확인하세요.")

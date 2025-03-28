@@ -3,11 +3,13 @@
 {% block content %}
 
 {% if current_user.is_authenticated %}
-<div class="d-flex justify-content-around gap-3" style="margin-top: 16px;">
 
+<div class="d-flex justify-content-around gap-3" style="margin-top: 16px;">
     <!--스트리밍 카드-->
   <div class="card" style="width: 18rem;">
-    <img src="{{ url_for('streaming.video') }}" class="card-img-top" alt="video" >
+    <img src="{{ url_for('streaming.video') }}" class="card-img-top" alt="video" 
+    onerror="this.onerror=null; this.src = '../static/images/smart.jpg';"
+    />
     <div class="card-body">
       <h5 class="card-title">Streaming</h5>
       <p class="card-text">Streaming</p>
