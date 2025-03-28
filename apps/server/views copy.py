@@ -1,11 +1,6 @@
 from flask import Flask, Blueprint, Response, render_template
 import cv2 as cv
-
 from apps.Detector1 import YOLODetector
-
-from apps.app import db
-from apps.auth.forms import LoginForm, SignUpForm, UpdateForm, PasswordForm, DeviceForm, SingleDeviceForm
-from apps.auth.models import User, Camera
 
 
 streaming = Blueprint(
@@ -14,22 +9,13 @@ streaming = Blueprint(
     template_folder="templates",
 )
 
-
-
-
-@streaming.route("/index")
+@streaming.route("/")
 def index():
     return render_template("server/index.html")
 
-@streaming.route("/")
-def home():
-    # user = User.query.get(user_id)
-    # ip_address = Camera.ip_address
-    return render_template("server/home.html")
-
 # YOLO 탐지기 초기화 (라즈베리파이 스트림 URL 지정)
-cap_rpi = cv.VideoCapture("http://192.168.10.250:8000/")
-yolo_detector = YOLODetector("http://192.168.10.250:8000/")
+cap_rpi = cv.VideoCapture("http://192.168.10.250:8000/stream.mjpg")
+yolo_detector = YOLODetector("http://192.168.10.250:8000/stream.mjpg")
 
 @streaming.route("/video")
 def video():
@@ -70,7 +56,7 @@ def streaming_page():
 from apps.test_Detector1 import test_YOLODetector
 
 cap = cv.VideoCapture(0)
-test_yolo_detector = test_YOLODetector("http://192.168.10.211:8000/knockx2/video_test")
+test_yolo_detector = test_YOLODetector("http://127.0.0.1:5000/knockx2/video_test")
 
 @streaming.route("/video_test")
 def video_test():

@@ -1,35 +1,6 @@
 {% extends "server/base.html" %}
 {% block title %}index{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-around gap-3" style="margin-top: 16px;">
-  <!--스트리밍 테스트 카드-->
-    <div class="card" style="width: 18rem;">
-      <img src="{{ url_for('streaming.video_test') }}" class="card-img-top" alt="video_test">
-      <div class="card-body">
-        <h5 class="card-title">Streaming_Test</h5>
-        <p class="card-text">웹캠을 이용한 스트리밍 테스트</p>
-        <div class="btn_position">
-        <a href="http://127.0.0.1:5000/knockx2/live_test" class="btn btn-dark">보기</a>
-      </div>
-      </div>
-    </div>
-
-    <!--스트리밍 카드-->
-  <div class="card" style="width: 18rem;">
-    <!-- <img src="" class="card-img-top" alt="video" -->
-    <!-- onerror="this.onerror.null; this.src='https://image-resource.creatie.ai/154479689743720/154479689743722/f2aaadb0b3b66ae169b19504f5595b53.jpg'"> -->
-    <img src="{{ url_for('streaming.video') }}" class="card-img-top" alt="video" >
-    <div class="card-body">
-      <h5 class="card-title">Streaming</h5>
-      <p class="card-text">Streaming</p>
-      <div class="btn_position">
-      <a href="http://127.0.0.1:5000/knockx2/live" class="btn btn-dark">보기</a>
-    </div>
-    </div>
-  </div>
-</div>
-
-
-
+index
 
 {% endblock %}
