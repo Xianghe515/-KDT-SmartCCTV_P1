@@ -1,51 +1,92 @@
 {% extends "server/base.html" %}
-{% block title%}로그인{% endblock %}
-{% block content%}
-<div class="mx-auto dt-auth-main">
-      <div class="card dt-auth-login {% if get_flashed_messages() %}is-invalid_login{% endif %}">
-            <header>로그인</header>
-            <section>
-
-<form action="{{ url_for('auth.login') }}"
-      method = "post"
-      novalidate="novalidate"
->
-      {% for message in get_flashed_messages() %}
-            <span class="dt-auth-flash">{{  message  }}</span>
-      {% endfor %}
-      {{ form.csrf_token}}
-      
-
-      <div class="form-floating">
-            <input type="email" class="form-control dt-auth-input {% if form.email.errors %}is-invalid{% elif form.email.data %}is-valid{% endif %}" 
-                   id="floatingEmail" name="email" value="{{ form.email.data or ''}}" placeholder="">
-            <label for="floatingEmail">이메일</label>
-            {% if form.email.errors %}
-                <div class="invalid-feedback">
-                    {{ form.email.errors[0] }}
-                </div>
-            {% endif %}
+{% block title %}index{% endblock %}
+{% block content %}
+<div class="relative flex h-[600px] bg-gray-100">
+    <div id="carouselExampleIndicators" class="carousel slide">
+        <div class="carousel-indicators">
+          <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+          <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
+          <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
+          <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="3" aria-label="Slide 4"></button>
+        </div>
+        <div class="carousel-inner">
+          <div class="carousel-item active">
+            <img src="/static/images/control.jpg" class="d-block w-100" alt="...">
+          </div>
+          <div class="carousel-item">
+            <img src="/static/images/ipcam.jpg" class="d-block w-100" alt="...">
+          </div>
+          <div class="carousel-item">
+            <img src="/static/images/cctv1.jpg" class="d-block w-100" alt="...">
+          </div>
+          <div class="carousel-item">
+            <img src="/static/images/cctv2.jpg" class="d-block w-100" alt="...">
+          </div>
         </div>
 
-        <div class="form-floating">
-            <input type="password" class="form-control dt-auth-input {% if form.password.errors %}is-invalid{% endif %}" 
-                   id="floatingPassword" name="password" placeholder="">
-            <label for="floatingPassword">비밀번호</label>
-            {% if form.password.errors %}
-                <div class="invalid-feedback">
-                    {{ form.password.errors[0] }}
-                </div>
-            {% elif form.password.data %}
-                <div class="valid-feedback">
-                </div>
-            {% endif %}
-        </div>
-
-      <div class="btn_position">
-      {{ form.submit(class="btn btn-md btn-dark btn-block dt-auth-btn") }}
       </div>
-</form>
-</section>
+
+          <div class="absolute inset-0 flex items-center justify-end pr-24">
+          <div class="w-96 p-8 bg-white rounded-lg shadow-lg">
+          <h2 class="text-2xl font-bold mb-6 text-center">로그인</h2>
+          <form class="space-y-4"
+          action="{{ url_for('auth.login') }}"
+          method = "post"
+          novalidate="novalidate"
+          >
+
+          {% for message in get_flashed_messages() %}
+          <span class="dt-auth-flash">{{  message  }}</span>
+          {% endfor %}
+          {{ form.csrf_token}}
+
+          <div class="form-floating">
+          <input type="email" class="form-custom form-control dt-auth-input {% if form.email.errors %}is-invalid{% elif form.email.data %}is-valid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
+              id="floatingEmail" name="email" value="{{ form.email.data or ''}}" placeholder="">
+          <label for="floatingEmail">이메일</label>
+          {% if form.email.errors %}
+          <div class="invalid-feedback">
+              {{ form.email.errors[0] }}
+          </div>
+          {% endif %}
+          </div>
+
+          <div class="form-floating">
+          <input type="password" class="form-control dt-auth-input {% if form.password.errors %}is-invalid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
+              id="floatingPassword" name="password" placeholder="">
+          <label for="floatingPassword">비밀번호</label>
+          {% if form.password.errors %}
+          <div class="invalid-feedback">
+              {{ form.password.errors[0] }}
+          </div>
+          {% elif form.password.data %}
+          <div class="valid-feedback">
+          </div>
+          {% endif %}
+          </div>
+
+          <button
+          type="submit"
+          class="w-full bg-custom text-white py-2 rounded-md hover:bg-rose-700 transition-colors"
+          >
+          로그인
+          </button>
+
+          <div class="flex justify-end gap-4 mt-4 text-sm text-gray-600">
+          <a href="#" class="hover:text-custom">아이디 찾기</a
+          ><a href="#" class="hover:text-custom">비밀번호 찾기</a
+          ><a href="{{  url_for('auth.signup')  }}" class="hover:text-custom text-base font-bold"
+          >회원가입</a
+          >
+          </div>
+          </form>
+          </div>
+          </div>
+          <div
+          class="absolute bottom-4 left-0 right-0 flex justify-center gap-2"
+          data-glide-el="controls[nav]"
+          >
+          </div>
 </div>
-</div>
+
 {% endblock %}

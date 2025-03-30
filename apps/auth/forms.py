@@ -121,6 +121,13 @@ class SingleDeviceForm(FlaskForm):
             Regexp(r"^\w{4}-\w{4}$", message="****-**** 형식으로 입력해주세요."),
         ],
     )
+    device_name = StringField(
+         "기기 별명",
+         validators=[
+              Optional(),
+              Length(0, 15, "15문자 이내로 입력해주세요."),
+         ]
+    )
     ip_address_1 = StringField(validators=[DataRequired(), Regexp(r"^\d{1,3}$"), validate_ip_range])
     ip_address_2 = StringField(validators=[DataRequired(), Regexp(r"^\d{1,3}$"), validate_ip_range])
     ip_address_3 = StringField(validators=[DataRequired(), Regexp(r"^\d{1,3}$"), validate_ip_range])

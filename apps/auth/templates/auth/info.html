@@ -1,48 +1,51 @@
 {% extends "server/base.html" %}
 {% block title %}회원 정보{% endblock %}
 {% block content %}
-<div class="mx-auto dt-auth-main">
-  <div class="card dt-auth">
-  <header>회원 정보</header>
-  <section>
+
+<div class="relative flex h-[600px] bg-gray-100">
+
+<div class="absolute inset-0 flex items-center justify-end pr-24">
+  <div class="w-96 p-8 bg-white rounded-lg shadow-lg">
+    <h2 class="text-2xl font-bold mb-6 text-center">회원 정보</h2>
       
       <div class="form-floating">
-        <input class="form-control dt-auth-input" type="text"  value="{{ current_user.user_name }}" disabled>
+        <input class="form-control dt-auth-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" type="text"  value="{{ current_user.user_name }}" disabled>
       <label for="floatingName">이름</label>
       </div>
 
       <div class="form-floating">
-        <input class="form-control dt-auth-input" type="text"  value="{{ current_user.email }}" disabled>
+        <input class="form-control dt-auth-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" type="text"  value="{{ current_user.email }}" disabled>
           <label for="floatingEmail">이메일</label>
       </div>
 
       
       <div class="form-floating">
         {% if current_user.phone_number == '' %}
-        <input class="form-control dt-auth-input" type="text"  value="전화번호를 입력해주세요." disabled>
+        <input class="form-control dt-auth-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" type="text"  value="전화번호를 입력해주세요." disabled>
         {% else %}
-        <input class="form-control dt-auth-input" type="text"  value="{{ current_user.phone_number }}" disabled>
+        <input class="form-control dt-auth-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" type="text"  value="{{ current_user.phone_number }}" disabled>
         {% endif %}
         <label for="floatingEmail">전화번호</label>
       </div>
 
       <div class="form-floating">
         {% if current_user.birth_date is none %}
-        <input class="form-control dt-auth-input" type="text"  value="생년월일을 입력해주세요" disabled>
+        <input class="form-control dt-auth-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" type="text"  value="생년월일을 입력해주세요" disabled>
         {% else %}
-        <input class="form-control dt-auth-input" type="text"  value="{{ current_user.birth_date }}" disabled>
+        <input class="form-control dt-auth-input w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" type="text"  value="{{ current_user.birth_date }}" disabled>
         {% endif %}
           <label for="floatingBirthDate">생년월일</label>
       </div>
       
-      <div class="btn_position">
-        <a href="{{ url_for('auth.update', user_id=current_user.id)}}" class="btn btn-md btn-dark dt-auth-btn" tabindex="-1" role="button" aria-disabled="true">회원 정보 수정</a>
-      </div>  
-      <div class="btn_position">
-        <a href="{{ url_for('auth.modify_pw', user_id=current_user.id)}}" class="btn btn-md btn-dark dt-auth-btn" tabindex="-1" role="button" aria-disabled="true">비밀번호 변경</a>
-      </div>  
-      <div class="btn_position">
-        <a href="{{ url_for('auth.register_device', user_id=current_user.id)}}" class="btn btn-md btn-dark dt-auth-btn" tabindex="-1" role="button" aria-disabled="true">기기 등록</a>
-      </div>  
+    <div class="flex justify-end gap-4 mt-4 text-sm text-gray-600">
+      <a href="{{ url_for('auth.update', user_id=current_user.id)}}" class="hover:text-custom">회원 정보 수정</a
+      ><a href="{{ url_for('auth.modify_pw', user_id=current_user.id)}}" class="hover:text-custom">비밀번호 변경</a
+      ><a href="{{ url_for('auth.register_device', user_id=current_user.id)}}" class="hover:text-custom text-base font-bold"
+        >기기 등록</a
+      >
+    </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 

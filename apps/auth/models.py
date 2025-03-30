@@ -81,6 +81,7 @@ class Camera(db.Model):
     camera_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey("Users.id", ondelete="CASCADE"))
     device_id = db.Column(db.String(255), nullable=False)
+    device_name = db.Column(db.String(255))
     ip_address = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     

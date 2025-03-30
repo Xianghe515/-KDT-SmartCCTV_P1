@@ -6,7 +6,6 @@ import numpy as np
 import logging
 
 from apps.auth.models import Camera
-from apps.Detector1 import YOLODetector
 
 streaming = Blueprint(
     "streaming",
@@ -29,6 +28,11 @@ def index():
 def home():
         # 유저가 가지고 있는 device_id를 통해 ip_address를 불러와야 함
         # 한 유저가 가지고 있는 디바이스 개수 세서 3개면 3개 전부 출력할 수 있어야 함     * 아직 등록한 디바이스가 없다면?
+    if current_user.is_authenticated:
+        cameras = Camera.query.filter_by(user_id=current_user.id).all()
+        print(cameras)
+        return render_template("server/home.html", cameras=cameras)
+    else:
         return render_template("server/home.html")
 
 
@@ -57,6 +61,7 @@ def video():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
+
 @streaming.route("/yolo_video")
 @login_required
 def yolo_video():
@@ -70,6 +75,8 @@ def yolo_video():
 
     ncnn_model = YOLO("./yolo11/yolo11n_ncnn_model")
     colors = np.random.uniform(0, 255, size=(len(ncnn_model.names), 3))  # 탐지 색상
+    
+    
 
     def generate_frames():
         while True:
@@ -124,3 +131,4 @@ def yolo_video():
 @streaming.route("/live")
 def streaming_page():
     return render_template("server/live.html")
+

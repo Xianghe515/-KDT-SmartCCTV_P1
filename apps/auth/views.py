@@ -57,7 +57,7 @@ def signup():
             next_ = request.args.get("next")
             if next_ is None or not next_.startswith("/"):
                   # 회원가입 완료 시 리다이렉트될 곳 -> auth.index
-                  next_ = url_for("streaming.index")
+                  next_ = url_for("streaming.home")
                   return redirect(next_)
       
       return render_template("auth/signup.html", form=form)

@@ -1,10 +1,11 @@
 {% extends "server/base.html" %}
 {% block title %}회원가입{% endblock %}
 {% block content %}
-<div class="mx-auto dt-auth-main">
-    <div class="card dt-auth-signup">
-        <header>회원가입</header>
-        <section>
+<div class="relative flex h-[600px] bg-gray-100">
+
+<div class="absolute inset-0 flex items-center justify-end pr-24">
+    <div class="w-96 p-8 bg-white rounded-lg shadow-lg">
+      <h2 class="text-2xl font-bold mb-6 text-center">회원가입</h2>
             <form action="{{ url_for('auth.signup', next=request.args.get('next')) }}"
                   method="POST"
                   novalidate="novalidate"
@@ -15,7 +16,7 @@
                 {% endfor %}
 
                 <div class="form-floating">
-                    <input type="text" class="form-control dt-auth-input {% if form.user_name.errors %}is-invalid{% elif form.user_name.data %}is-valid{% endif %}"
+                    <input type="text" class="form-control dt-auth-input {% if form.user_name.errors %}is-invalid{% elif form.user_name.data %}is-valid{% endif %}  w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom"
                            id="floatingUsername" name="user_name" value="{{ form.user_name.data or ''}}" placeholder="">
                     <label for="floatingUsername">이름</label>
                     {% if form.user_name.errors %}
@@ -30,7 +31,7 @@
                 </div>
                 
                 <div class="form-floating">
-                    <input type="email" class="form-control dt-auth-input {% if form.email.errors %}is-invalid{% elif form.email.data %}is-valid{% endif %}" 
+                    <input type="email" class="form-control dt-auth-input {% if form.email.errors %}is-invalid{% elif form.email.data %}is-valid{% endif %}  w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
                            id="floatingEmail" name="email" value="{{ form.email.data or ''}}" placeholder="">
                     <label for="floatingEmail">이메일</label>
                     {% if form.email.errors %}
@@ -45,7 +46,7 @@
                 </div>
                 
                 <div class="form-floating">
-                    <input type="password" class="form-control dt-auth-input {% if form.password.errors %}is-invalid{% elif form.password.data %}is-valid{% endif %}" 
+                    <input type="password" class="form-control dt-auth-input {% if form.password.errors %}is-invalid{% elif form.password.data %}is-valid{% endif %}  w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
                            id="floatingPassword" name="password" placeholder="">
                     <label for="floatingPassword">비밀번호</label>
                     {% if form.password.errors %}
@@ -59,7 +60,7 @@
                 </div>
                 
                 <div class="form-floating">
-                    <input type="text" class="form-control dt-auth-input {% if form.phone_number.errors %}is-invalid{% elif form.phone_number.data %}is-valid{% endif %}" 
+                    <input type="text" class="form-control dt-auth-input {% if form.phone_number.errors %}is-invalid{% elif form.phone_number.data %}is-valid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
                            id="phone_number" name="phone_number" value="{{ form.phone_number.data or '' }}" placeholder="000-0000-0000">
                     <label for="phone_number">전화번호</label>
                     {% if form.phone_number.errors %}
@@ -74,7 +75,7 @@
                 </div>
                 
                 <div class="form-floating">
-                    <input type="text" class="form-control dt-auth-input {% if form.birth_date.errors %}is-invalid{% elif form.birth_date.data %}is-valid{% endif %}" 
+                    <input type="text" class="form-control dt-auth-input {% if form.birth_date.errors %}is-invalid{% elif form.birth_date.data %}is-valid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
                            id="birth_date" name="birth_date" value="{{ form.birth_date.data or '' }}" placeholder="YYYY-MM-DD">
                     <label for="birth_date">생년월일</label>
                     {% if form.birth_date.errors %}
@@ -86,14 +87,17 @@
                         </div>
                     {% endif %}
                 </div>
-                
 
-                <div class="btn_position">
-                    <button type="submit" class="btn btn-md btn-dark btn-block dt-auth-btn">가입하기</button>
-                </div>
+                <button
+                type="submit"
+                class="w-full bg-custom text-white py-2 rounded-md hover:bg-rose-700 transition-colors"
+                style="margin-top: 10px;"
+              >
+                회원가입
+              </button>
             </form>
-        </section>
     </div>
+</div>
 </div>
 
 <script>
