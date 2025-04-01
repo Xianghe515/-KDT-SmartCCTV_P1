@@ -2,5 +2,52 @@
 {% block title %}Video Streaming{% endblock %}
 {% block content %}
 <h1>Video Streaming Page</h1>
-<img src="{{ url_for('streaming.yolo_video') }}" class="rounded mx-auto d-block" alt="Video Stream" width="640" height="480">
+<img src="{{ url_for('streaming.yolo_video', camera_id=camera_id) }}" class="rounded mx-auto d-block" alt="Video Stream" width="640" height="480" id="yolo-stream">
+
+<div class="btn-group" role="group" aria-label="Basic example">
+    <button type="button" class="btn btn-primary">Left</button>
+    <button type="button" class="btn btn-primary">Middle</button>
+    <button type="button" class="btn btn-primary">Right</button>
+    <button id="fullscreen-btn" class="btn btn-secondary">전체화면</button>
+    <a href="{{ url_for('streaming.capture', camera_id=camera_id) }}" class="btn btn-success" target="_blank">캡처</a>
+</div>
+
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+    Launch demo modal
+</button>
+
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <img src="{{ url_for('streaming.yolo_video', camera_id=camera_id) }}" class="rounded mx-auto d-block" alt="Video Stream" width="100%" >
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 전체 화면
+    document.getElementById("fullscreen-btn").addEventListener("click", function () {
+        let videoFrame = document.getElementById("yolo-stream");
+        if (videoFrame.requestFullscreen) {
+            videoFrame.requestFullscreen();
+        } else if (videoFrame.mozRequestFullScreen) { // Firefox
+            videoFrame.mozRequestFullScreen();
+        } else if (videoFrame.webkitRequestFullscreen) { // Chrome, Safari, Opera
+            videoFrame.webkitRequestFullscreen();
+        } else if (videoFrame.msRequestFullscreen) { // IE/Edge
+            videoFrame.msRequestFullscreen();
+        }
+    });
+</script>
+
 {% endblock %}

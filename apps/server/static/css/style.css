@@ -131,7 +131,7 @@ color: #EEEEEE
 }
 
 .is-invalid-device {
-    border-color: rgb(191, 54, 68) !important;
+    border-color: #bf3644 !important;
     background-repeat: no-repeat;
     background-position: right 10px center;
     background-size: 18px;
@@ -191,3 +191,12 @@ color: #EEEEEE
     font-size: 0.875rem !important; /* 레이블 크기 조정 */
     padding: 1 !important;
 }
+
+label::after {
+    content: '';
+    display: none; /* 또는 다른 설정 */
+}
+
+#yolo-stream {
+        transition: transform 0.1s ease-in-out; 
+    }

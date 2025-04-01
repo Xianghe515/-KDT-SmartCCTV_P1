@@ -126,7 +126,7 @@ class SingleDeviceForm(FlaskForm):
          validators=[
               Optional(),
               Length(0, 15, "15문자 이내로 입력해주세요."),
-         ]
+         ],
     )
     ip_address_1 = StringField(validators=[DataRequired(), Regexp(r"^\d{1,3}$"), validate_ip_range])
     ip_address_2 = StringField(validators=[DataRequired(), Regexp(r"^\d{1,3}$"), validate_ip_range])

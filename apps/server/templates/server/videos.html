@@ -1,0 +1,18 @@
+{% extends "server/base.html" %}
+{% block title %}Saved Videos{% endblock %}
+{% block content %}
+<h1>Saved Videos</h1>
+{% if videos %}
+    <ul>
+    {% for video in videos %}
+        <li>
+            <strong>{{ video.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</strong> - Duration: {{ video.duration }}
+            {% if video.detected_objects %} - Detected: {{ video.detected_objects }} {% endif %}
+            <a href="{{ url_for('streaming.video_feed', filename=video.filename) }}" target="_blank">View Video</a>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>저장된 비디오가 없습니다.</p>
+{% endif %}
+{% endblock %}

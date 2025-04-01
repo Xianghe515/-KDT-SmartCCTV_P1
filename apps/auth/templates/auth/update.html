@@ -20,7 +20,7 @@
     <div class="form-floating">
         <input type="text" class="form-control dt-auth-input {% if form.user_name.errors %}is-invalid{% elif form.user_name.data %}is-valid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
                id="floatingUsername" name="user_name" value="{{ current_user.user_name }}">
-        <label for="floatingUsername">이름</label>
+        <label for="floatingUsername">이름 <span style="color: red;">*</span></label>
         {% if form.user_name.errors %}
             <div class="invalid-feedback">
                 {{ form.user_name.errors[0] }}
@@ -34,13 +34,13 @@
 <div class="form-floating">
         <input type="email" class="form-control dt-auth-input  w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
         name="email" value="{{ current_user.email }}" style="background-color: #e9ecef" disabled>
-        <label for="floatingEmail">이메일</label>
+        <label for="floatingEmail">이메일 <span style="color: red;">*</span></label>
             </div>
     
                 <div class="form-floating">
                     <input type="text" class="form-control dt-auth-input {% if form.phone_number.errors %}is-invalid{% elif form.phone_number.data %}is-valid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
                            id="phone_number" name="phone_number" value="{{ current_user.phone_number if current_user.phone_number is not none }}" placeholder="000-0000-0000">
-                    <label for="phone_number">전화번호</label>
+                    <label for="phone_number">전화번호 <span style="color: red;">*</span></label>
                     {% if form.phone_number.errors %}
                         <div class="invalid-feedback">
                             {{ form.phone_number.errors[0] }}

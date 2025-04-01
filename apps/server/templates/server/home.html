@@ -13,10 +13,14 @@
       class="card-img-top" alt="video" 
       onerror="this.onerror=null; this.src = '../static/images/no_cam.jpg';"/>
     <div class="card-body">
+      {% if camera.device_name%}
+      <h5 class="card-title">{{ camera.device_name }}</h5>
+      {% else %}
       <h5 class="card-title">Streaming</h5>
+      {% endif %}
       <p class="card-text">Device ID: {{ camera.device_id }}</p>
       <div class="btn_position">
-      <a href="{{ url_for('streaming.yolo_video', camera_id=camera.camera_id) }}" class="dt-auth-btn bg-custom text-white py-2 rounded-md hover:bg-rose-700 transition-colors"
+      <a href="{{ url_for('streaming.streaming_page', camera_id=camera.camera_id) }}" class="dt-auth-btn bg-custom text-white py-2 rounded-md hover:bg-rose-700 transition-colors"
       style="text-align: center; width: auth; max-height: 40px; min-width: 56px;">보기</a>
     </div>
     </div>
@@ -48,12 +52,13 @@
         <div class="btn_position">
         <a href="{{  url_for('auth.login')  }}" class="btn bg-custom text-white py-2 rounded-md hover:bg-rose-700 transition-colors">로그인</a>
       </div>
-      </div>
     </div>
   </div>
 </div>
+</div>
 {% endif %}
 
+<a href="{{  url_for('streaming.view_videos')  }}" class="btn bg-custom text-white py-2 rounded-md hover:bg-rose-700 transition-colors">영상 보관</a>
 
 
 {% endblock %}

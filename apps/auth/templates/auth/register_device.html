@@ -27,7 +27,7 @@
                             name="{{ device_form.device_id.name }}"
                             placeholder="일련번호"
                             value="{{ device_form.device_id.data or '' }}">
-                    <label for="{{ device_form.device_id.id }}">일련번호</label>
+                    <label for="{{ device_form.device_id.id }}">일련번호 <span style="color: red;">*</span></label>
                     {% if device_form.device_id.errors %}
                         <div class="invalid-feedback">
                             {{ device_form.device_id.errors[0] }}
@@ -39,7 +39,7 @@
                             class="form-control dt-auth-input {% if device_form.device_name.errors %}is-invalid{% elif device_form.device_name.data %}is-valid{% endif %}  w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom"
                             id="{{ device_form.device_name.id }}"
                             name="{{ device_form.device_name.name }}"
-                            placeholder="일련번호"
+                            placeholder="기기 별명"
                             value="{{ device_form.device_name.data or '' }}">
                     <label for="{{ device_form.device_name.id }}">기기 별명</label>
                     {% if device_form.device_name.errors %}
@@ -80,7 +80,7 @@
                             name="{{ device_form.ip_address_4.name }}"
                             placeholder=""
                             value="{{ device_form.ip_address_4.data or '' }}">
-                    <label style="top: 9.8px;">IP</label>
+                    <label style="top: 4.4px; left: 1.8px; padding: 3%;" >IP  <span style="color: red; padding: 0%;">*</span></label>
                     {% if device_form.ip_address_1.errors %}
                         <div class="invalid-feedback">
                             {{ device_form.ip_address_1.errors[0] }}
