@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, Response, render_template, current_app
+from flask import Flask, Blueprint, Response, render_template
 from flask_login import current_user, login_required
 import cv2 as cv
 from ultralytics import YOLO
@@ -7,12 +7,18 @@ import logging
 import datetime
 import os
 import time
+from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy import create_engine
 
 from apps.auth.models import Camera, Log, Video
-from apps.app import db, create_app
-import apps.app as app
+from apps.app import db
 from apps.VideoStream import VideoStream
 
+
+# dll을 못 불러오는 오류 발생       *dll - C언어 동적 라이브러리
+import ctypes  # c 동적 라이브러리 모듈
+# print(os.getcwd())
+ctypes.windll.LoadLibrary('./openh264-1.8.0-win64.dll')  # windll 라이브러리를 직접 로드하여 해결
 
 logging.getLogger("ultralytics").setLevel(logging.CRITICAL)
 
@@ -23,18 +29,9 @@ streaming = Blueprint(
 )
 VIDEO_STORAGE_PATH = "./apps/server/static/videos"  # 저장할 비디오 폴더 경로
 
-
-def save_video_to_db(user_id, camera_id, filename, recording_start_time):
-    """DB에 비디오 정보를 저장하는 함수"""
-    with app.app_context():
-        new_video = Video(
-            user_id=user_id,
-            camera_id=camera_id,
-            filename=filename,
-            created_at=recording_start_time,
-        )
-        db.session.add(new_video)
-        db.session.commit()
+engine = create_engine('mysql+pymysql://knockx2:knockx2@localhost/knockx2')
+Session = scoped_session(sessionmaker(bind=engine))
+session = Session()
 
 @streaming.route("/index")
 def index():
@@ -89,11 +86,12 @@ def yolo_video(camera_id):
 
     stream = VideoStream(stream_url)
     
+    fourcc = cv.VideoWriter_fourcc(*'avc1')
+    
     is_recording = False
     video_writer = None
     last_detection_time = None
     recording_start_time = None
-    fourcc = cv.VideoWriter_fourcc(*'XVID')
     min_record_duration = 5  # 최소 녹화 시간 (초)
     countdown_timer = 0 # 카운트다운 타이머 추가
     detection_start_time = None # 감지 시작 시간 변수 추가
@@ -156,7 +154,7 @@ def yolo_video(camera_id):
                 if not is_recording:
                     is_recording = True
                     recording_start_time = datetime.datetime.now()
-                    filename = f"{user_name}_{camera_id}_{now.strftime('%Y%m%d_%H%M%S')}.avi"
+                    filename = f"{user_name}_{camera_id}_{now.strftime('%Y%m%d_%H%M%S')}.mp4"
                     filepath = os.path.join(VIDEO_STORAGE_PATH, filename)
                     video_writer = cv.VideoWriter(filepath, fourcc, 20.0, (img.shape[1], img.shape[0]))
                     print("─" * 81)
@@ -171,7 +169,7 @@ def yolo_video(camera_id):
                 if not detected:
                     if countdown_timer > 0:
                         print("─" * 81)
-                        print(f"\t\t감지된 대상이 없습니다. {countdown_timer}초 후 녹화를 종료합니다.")
+                        print(f"\t\t감지 대상이 없습니다. {countdown_timer}초 후 녹화를 종료합니다.")
                         print("─" * 81)
                         countdown_timer -= 1
                         time.sleep(1)
@@ -182,17 +180,18 @@ def yolo_video(camera_id):
                             print("─" * 81)
                             print("\t\t\t\t   녹화 종료")
                             print("─" * 81)
-                            filename = f"{user_name}_{camera_id}_{recording_start_time.strftime('%Y%m%d_%H%M%S')}.avi"
-                            # with current_app.app_context():
-                            #     new_video = Video(
-                            #         user_id=user_id,
-                            #         camera_id=camera_id,
-                            #         filename=filename,
-                            #         created_at=recording_start_time,
-                            #     )
-                            #     db.session.add(new_video)
-                            #     db.session.commit()
-                            save_video_to_db(user_id, camera_id, filename, recording_start_time)
+                            filename = f"{user_name}_{camera_id}_{recording_start_time.strftime('%Y%m%d_%H%M%S')}.mp4"
+                            
+                            new_video = Video(
+                                user_id=user_id,
+                                camera_id=camera_id,
+                                filename=filename,
+                                created_at=recording_start_time,
+                                duration=total_elapsed_time,
+                                detected_objects = class_name,
+                            )
+                            session.add(new_video)
+                            session.commit()
 
                     elif elapsed_time >= min_record_duration and countdown_timer == 0:
                         countdown_timer = 5
@@ -202,54 +201,6 @@ def yolo_video(camera_id):
                 # 아직 최소 녹화 시간을 채우지 못했으면 계속 녹화
                 elif not detected and total_elapsed_time < min_record_duration:
                     pass # 녹화 유지
-
-            # if detected:
-            #     if detection_start_time is None:
-            #         detection_start_time = datetime.datetime.now()
-            #         print("─" * 81)
-            #         print(class_name)
-            #         print(detection_start_time)
-            #         print("─" * 81)
-            #     else:
-            #         elapsed_detection_time = (datetime.datetime.now() - detection_start_time).total_seconds()
-            #         if elapsed_detection_time >= detection_delay and not is_recording:
-            #             is_recording = True
-            #             recording_start_time = datetime.datetime.now()
-            #             filename = f"{user_name}_{camera_id}_{now.strftime('%Y%m%d_%H%M%S')}.avi"
-            #             filepath = os.path.join(VIDEO_STORAGE_PATH, filename)
-            #             video_writer = cv.VideoWriter(filepath, fourcc, 20.0, (img.shape[1], img.shape[0]))
-            #             print("─" * 81)
-            #             print(f"\t녹화 시작: {filepath}")
-            #             print("─" * 81)
-            #             countdown_timer = 0 # 녹화 시작 시 카운트다운 초기화
-            #     last_detection_time = datetime.datetime.now() # 마지막 감지 시간 업데이트 (녹화 중에도)
-            # else:
-            #     detection_start_time = None # 감지되지 않으면 초기화
-            #     if is_recording:
-            #         if countdown_timer > 0:
-            #             print("─" * 81)
-            #             print(f"\t\t감지된 대상이 없습니다. {countdown_timer}초 후 녹화를 종료합니다.")
-            #             print("─" * 81)
-            #             countdown_timer -= 1
-            #             time.sleep(1)
-            #             if countdown_timer == 0:
-            #                 is_recording = False
-            #                 video_writer.release()
-            #                 video_writer = None
-            #                 print("─" * 81)
-            #                 print("\t\t\t\t   녹화 종료")
-            #                 print("─" * 81)
-            #                 filename = f"{user_name}_{camera_id}_{recording_start_time.strftime('%Y%m%d_%H%M%S')}.avi"
-            #                 # new_video = Video(
-            #                 #     user_id=user_id,
-            #                 #     camera_id=camera_id,
-            #                 #     filename=filename,
-            #                 #     created_at=recording_start_time,
-            #                 # )
-            #                 # db.session.add(new_video)
-            #                 # db.session.commit()
-            #         elif is_recording and (datetime.datetime.now() - last_detection_time).total_seconds() >= min_record_duration and countdown_timer == 0:
-            #             countdown_timer = 5
 
             if is_recording:
                 video_writer.write(img)
@@ -321,10 +272,13 @@ def capture(camera_id):
 
 @streaming.route("/videos")
 @login_required
-def view_videos():
+def video_storage():
     user_id = current_user.id
+    cameras = Camera.query.filter_by(user_id=current_user.id).all()
     videos = Video.query.filter_by(user_id=user_id).order_by(Video.created_at.desc()).all()
-    return render_template("server/videos.html", videos=videos)
+    return render_template("server/videos.html", videos=videos, cameras=cameras)
+
+
 
 @streaming.route("/video_feed/<filename>")
 @login_required
@@ -341,4 +295,4 @@ def video_feed(filename):
                     break
                 yield chunk
 
-    return Response(generate(), mimetype="video/avi")
+    return Response(generate(), mimetype="video/mp4")

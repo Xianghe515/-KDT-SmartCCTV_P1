@@ -59,9 +59,11 @@ class Video(db.Model):
     video_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     user_id = db.Column(db.Integer, db.ForeignKey("Users.id", ondelete="CASCADE"))
-    camera_id = db.Column(db.Integer, db.ForeignKey("Cameras.id", ondelete="CASCADE"))
+    camera_id = db.Column(db.Integer, db.ForeignKey("Cameras.camera_id", ondelete="CASCADE"))
     filename = db.Column(db.String(255), nullable=False)
     duration = db.Column(db.String(50))
+    detected_objects = db.Column(db.String(50))
+    
 
     def __repr__(self):
         return f"<Video {self.video_id}>"

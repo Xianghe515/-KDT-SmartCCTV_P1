@@ -1,18 +1,30 @@
 {% extends "server/base.html" %}
-{% block title %}Saved Videos{% endblock %}
+{% block title %}Video Storage{% endblock %}
 {% block content %}
-<h1>Saved Videos</h1>
+
+<div class="d-flex justify-content-around gap-3" style="margin-top: 16px;">
+
 {% if videos %}
-    <ul>
     {% for video in videos %}
-        <li>
-            <strong>{{ video.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</strong> - Duration: {{ video.duration }}
-            {% if video.detected_objects %} - Detected: {{ video.detected_objects }} {% endif %}
-            <a href="{{ url_for('streaming.video_feed', filename=video.filename) }}" target="_blank">View Video</a>
-        </li>
+    <div class="card" style="width: 13rem;">
+        <video class="card-img-top" controls onerror="this.onerror=null; this.src = '../static/images/no_cam.jpg';" style="max-height: 200px;">
+            <source src="{{ url_for('streaming.video_feed', filename=video.filename) }}" type="video/mp4">
+        </video>
+        <div class="card-body">
+          <h5 class="card-title"><strong>{{ video.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</strong></h5>
+          <p class="card-text">Duration: {{ video.duration }}</p>
+          <p class="card-text">{% if video.detected_objects %}Detected: {{ video.detected_objects }} {% endif %}</p>
+
+          <div class="btn_position">
+          <a href="{{ url_for('streaming.video_feed', filename=video.filename) }}" class="dt-auth-btn bg-custom text-white py-2 rounded-md hover:bg-rose-700 transition-colors"
+          style="text-align: center; width: 82px; max-height: 40px; min-width: 56px;" download="{{ video.filename }}">다운로드</a>
+        </div>
+        </div>
+      </div>
     {% endfor %}
-    </ul>
 {% else %}
     <p>저장된 비디오가 없습니다.</p>
 {% endif %}
+
+</div>
 {% endblock %}
