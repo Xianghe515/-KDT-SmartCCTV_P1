@@ -139,6 +139,7 @@ yolo11/
 node_modules/
 package-lock.json
 package.json
+apps/server/static/videos
 
 # Spyder project settings
 .spyderproject

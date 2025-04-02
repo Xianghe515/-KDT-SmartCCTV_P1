@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, current_app
 from flask_login import LoginManager  # type:ignore
 from flask_migrate import Migrate  # type:ignore
 from flask_sqlalchemy import SQLAlchemy
@@ -9,7 +9,6 @@ from apps.config import config
 log = logging.getLogger("werkzeug")
 log.disabled = True
 
-
 # Flask 확장 초기화
 db = SQLAlchemy()
 csrf = CSRFProtect()
@@ -19,7 +18,7 @@ login_manager.login_message = ""
 
 def create_app(config_key):
     app = Flask(__name__, static_folder="server/static")
-
+    
     # 앱 구성 설정
     app.config.from_object(config[config_key])
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://knockx2:knockx2@localhost/knockx2'
@@ -40,3 +39,5 @@ def create_app(config_key):
     app.register_blueprint(auth_views.auth, url_prefix="/auth")
     
     return app
+
+app = create_app('local')

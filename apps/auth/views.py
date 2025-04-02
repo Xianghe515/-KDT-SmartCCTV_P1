@@ -38,7 +38,6 @@ def signup():
                   password=form.password.data,
                   birth_date=birth_date,  # 변환된 생년월일 저장
                   phone_number=form.phone_number.data,
-                  # device_id=form.device_id.data,
             )
             
             # 이메일 중복 체크
