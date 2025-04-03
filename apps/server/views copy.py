@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, Response, render_template, request
+from flask import Flask, Blueprint, Response, render_template
 from flask_login import current_user, login_required
 import cv2 as cv
 from ultralytics import YOLO
@@ -9,7 +9,6 @@ import os
 import time
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy import create_engine
-from math import ceil
 
 from apps.auth.models import Camera, Log, Video
 from apps.app import db
@@ -94,7 +93,6 @@ def yolo_video(camera_id):
     video_writer = None
     last_detection_time = None
     recording_start_time = None
-    recording_end_time = None
     min_record_duration = 5  # 최소 녹화 시간 (초)
     countdown_timer = 0 # 카운트다운 타이머 추가
     detection_start_time = None # 감지 시작 시간 변수 추가
@@ -104,7 +102,7 @@ def yolo_video(camera_id):
         os.makedirs(VIDEO_STORAGE_PATH)
 
     def generate_frames():
-        nonlocal is_recording, video_writer, last_detection_time, recording_start_time, recording_end_time, countdown_timer, detection_start_time
+        nonlocal is_recording, video_writer, last_detection_time, recording_start_time, countdown_timer, detection_start_time
         detected_objects_in_frame = []
 
         while True:
@@ -187,7 +185,7 @@ def yolo_video(camera_id):
                             print("\t\t\t\t   녹화 종료")
                             print("─" * 81)
                             filename = f"{user_name}_{camera_id}_{recording_start_time.strftime('%Y%m%d_%H%M%S')}.mp4"
-                            recording_end_time = datetime.datetime.now()
+                            
                             detected_objects = list(set(detected_objects_in_frame))  # 중복 제거
                             detected_objects_str = ",".join(detected_objects)  # 리스트를 문자열로 변환
                             new_video = Video(
@@ -197,9 +195,7 @@ def yolo_video(camera_id):
                                 created_at=recording_start_time,
                                 duration=total_elapsed_time,
                                 detected_objects=detected_objects_str,
-                                end_time=recording_end_time,
                             )
-                            print(detected_objects)
                             session.add(new_video)
                             session.commit()
 
@@ -286,15 +282,7 @@ def video_storage():
     user_id = current_user.id
     cameras = Camera.query.filter_by(user_id=current_user.id).all()
     videos = Video.query.filter_by(user_id=user_id).order_by(Video.created_at.desc()).all()
-
-    # 페이지 번호 가져오기 (기본값: 1)
-    page = request.args.get("page", 1, type=int) 
-    per_page = 2  # 한 페이지에 표시할 비디오 개수
-
-    # 페이지네이션 적용하여 데이터 가져오기
-    pagination = Video.query.filter_by(user_id=user_id).order_by(Video.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
-    
-    return render_template("server/videos.html", videos=pagination.items, cameras=cameras, pagination=pagination)
+    return render_template("server/videos.html", videos=videos, cameras=cameras)
 
 
 
@@ -314,28 +302,3 @@ def video_feed(filename):
                 yield chunk
 
     return Response(generate(), mimetype="video/mp4")
-
-@streaming.route("/videos/search", methods=["GET"])
-def search():
-    
-    videos = Video.query.filter_by(user_id=current_user.id).order_by(Video.created_at.desc()).all()
-
-    search_text = request.args.get("search")
-    label_tag_dict = {}
-    filtered_videos = []
-
-    for video in videos:
-        if not search_text:
-            label_tag = (db.session.query(Video).filter(Video.detected_objects)).all()
-        else:
-            label_tag = (db.session.query(Video).filter(Video.detected_objects)).filter(Video.detected_objects.like("%"+search_text+"%")).all()
-            if not videos:
-                continue
-            
-            label_tag = (db.session.query(Video).filter(Video.detected_objects)).all()
-
-        label_tag_dict[videos.video.label_tag] = label_tag
-
-        filtered_videos.append(video)
-        delete_form
-    return render_template("server/videos.html")

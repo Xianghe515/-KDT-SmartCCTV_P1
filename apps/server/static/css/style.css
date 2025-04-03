@@ -200,3 +200,23 @@ label::after {
 #yolo-stream {
         transition: transform 0.1s ease-in-out; 
     }
+    
+    .page-link {
+        background-color: #0D1B2A;  /* 딥 네이비 */
+        color: white;
+    }
+    
+    .page-link:hover {
+        background-color: #1B263B;  /* 어두운 블루 */
+        color: #fff;
+    }
+    
+    .page-item.active .page-link {
+        background-color: #0569a1;  /* 네온 블루 */
+        border-color: #0569a1;
+    }
+
+    .dt-auth-delete {
+        display: block;
+        margin: 10px auto 0 0;
+    }

@@ -1,0 +1,43 @@
+{% extends "server/base.html" %}
+{% block title %}Video Storage{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-around gap-3" style="margin-top: 16px;">
+
+{% if videos %}
+
+<div class="container">
+  <div class="row row-cols-5 g-3">
+    {% for video in videos %}
+    <div class="col">
+      <div class="card" style="width: auto; height: 380px;">
+        <video class="card-img-top" controls onerror="this.onerror=null; this.src = '../static/images/no_cam.jpg';" style="max-height: 200px;">
+          <source src="{{ url_for('streaming.video_feed', filename=video.filename) }}" type="video/mp4">
+        </video>
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title"><strong>{{ video.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</strong>
+            <p></p>
+            ~ <strong>{{ video.end_time.strftime('%Y-%m-%d %H:%M:%S') if video.end_time else '알 수 없음'  }}</strong>
+          </h5>
+          <p class="card-text">
+            {% if video.detected_objects %}
+                {% for obj in video.detected_objects.split(',')[:4] %}
+                    <span class="badge bg-secondary">{{ obj }}</span>
+                {% endfor %}
+            {% endif %}
+          </p>
+          <div class="mt-auto btn_position">
+            <a href="{{ url_for('streaming.video_feed', filename=video.filename) }}" class="dt-auth-btn bg-custom text-white py-2 rounded-md hover:bg-rose-700 transition-colors"
+            style="text-align: center; width: 82px; max-height: 40px; min-width: 56px;" download="{{ video.filename }}">다운로드</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+        <p>저장된 비디오가 없습니다.</p>
+    {% endif %}
+  </div>
+</div>
+</div>
+  {% endblock %}

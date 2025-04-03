@@ -20,7 +20,7 @@
       {% endif %}
       <p class="card-text">Device ID: {{ camera.device_id }}</p>
       <div class="btn_position">
-      <a href="{{ url_for('streaming.streaming_page', camera_id=camera.camera_id) }}" class="dt-auth-btn bg-custom text-white py-2 rounded-md hover:bg-rose-700 transition-colors"
+      <a href="{{ url_for('streaming.streaming_page', camera_id=camera.camera_id) }}" class="dt-auth-btn bg-[#0D1B2A] text-white py-2 rounded-md hover:bg-sky-700 transition-colors"
       style="text-align: center; width: auth; max-height: 40px; min-width: 56px;">보기</a>
     </div>
     </div>
@@ -34,7 +34,7 @@
             <h5 class="card-title">Streaming</h5>
             <p class="card-text">등록된 기기가 없습니다.</p>
             <div class="btn_position">
-                <a href="{{ url_for('auth.register_device', user_id=current_user.id)}}" class="dt-auth-btn bg-custom text-white py-2 rounded-md hover:bg-rose-700 transition-colors" 
+                <a href="{{ url_for('auth.register_device', user_id=current_user.id)}}" class="dt-auth-btn bg-[#0D1B2A] text-white py-2 rounded-md hover:bg-sky-700 transition-colors" 
                 style="text-align: center; width: 90px; max-height: 40px; min-width: 56px;">기기 등록</a>
             </div>
         </div>
@@ -50,7 +50,7 @@
         <h5 class="card-title">Streaming</h5>
         <p class="card-text">로그인이 필요한 서비스입니다.</p>
         <div class="btn_position">
-        <a href="{{  url_for('auth.login')  }}" class="btn bg-custom text-white py-2 rounded-md hover:bg-rose-700 transition-colors">로그인</a>
+        <a href="{{  url_for('auth.login')  }}" class="btn bg-[#0D1B2A] text-white py-2 rounded-md hover:bg-sky-700 transition-colors">로그인</a>
       </div>
     </div>
   </div>
@@ -58,7 +58,7 @@
 </div>
 {% endif %}
 
-<a href="{{  url_for('streaming.video_storage')  }}" class="btn bg-custom text-white py-2 rounded-md hover:bg-rose-700 transition-colors">영상 보관</a>
+<a href="{{  url_for('streaming.video_storage')  }}" class="btn bg-[#0D1B2A] text-white py-2 rounded-md hover:bg-sky-700 transition-colors">영상 보관</a>
 
 
 {% endblock %}
