@@ -23,7 +23,7 @@ def create_app(config_key):
     # 앱 구성 설정
     app.config.from_object(config[config_key])
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://knockx2:knockx2@localhost/knockx2'
-
+    
     # Flask 확장 초기화
     csrf.init_app(app)
     db.init_app(app)

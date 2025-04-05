@@ -144,3 +144,6 @@ class DeviceForm(FlaskForm):
          validators=[DataRequired("IP 주소는 필수입니다.")]
          )
     submit = SubmitField("등록")
+
+class DeleteForm(FlaskForm):
+     submit = SubmitField("삭제")

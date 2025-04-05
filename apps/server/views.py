@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, Response, render_template, request
+from flask import Flask, Blueprint, Response, render_template, request, send_from_directory, flash, redirect, url_for
 from flask_login import current_user, login_required
 import cv2 as cv
 from ultralytics import YOLO
@@ -7,9 +7,12 @@ import logging
 import datetime
 import os
 import time
+import re
+from datetime import datetime
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy import create_engine
-from math import ceil
+from flask_wtf.csrf import validate_csrf
+from apps.auth.forms import DeleteForm
 
 from apps.auth.models import Camera, Log, Video
 from apps.app import db
@@ -280,22 +283,83 @@ def capture(camera_id):
     _, buffer = cv.imencode('.jpg', img)
     return Response(buffer.tobytes(), mimetype="image/jpeg")
 
-@streaming.route("/videos")
+@streaming.route("/videos", methods=["GET"])
 @login_required
 def video_storage():
     user_id = current_user.id
-    cameras = Camera.query.filter_by(user_id=current_user.id).all()
-    videos = Video.query.filter_by(user_id=user_id).order_by(Video.created_at.desc()).all()
+    cameras = Camera.query.filter_by(user_id=user_id).all()
 
-    # 페이지 번호 가져오기 (기본값: 1)
-    page = request.args.get("page", 1, type=int) 
-    per_page = 2  # 한 페이지에 표시할 비디오 개수
+    # 기본 쿼리 설정
+    query = Video.query.filter_by(user_id=user_id).order_by(Video.created_at.desc())
 
-    # 페이지네이션 적용하여 데이터 가져오기
-    pagination = Video.query.filter_by(user_id=user_id).order_by(Video.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
-    
-    return render_template("server/videos.html", videos=pagination.items, cameras=cameras, pagination=pagination)
+    # 검색어 처리 (쉼표 또는 공백으로 구분된 키워드)
+    search_label = request.args.get("label", "").strip()
+    if search_label:
+        keywords = re.split(r'[,\s]+', search_label)  # 쉼표 또는 공백으로 분리
+        filters = [Video.detected_objects.like(f"%{keyword}%") for keyword in keywords if keyword]
+        if filters:
+            query = query.filter(*filters)  # AND 조건으로 검색
 
+    # 날짜 필터
+    start_date_str = request.args.get("start_date", "")
+    end_date_str = request.args.get("end_date", "")
+
+    if start_date_str or end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d") if start_date_str else None
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d") if end_date_str else None
+
+            now = datetime.now()
+
+            # 메시지 먼저 띄우기 위한 체크
+            if (start_date and start_date > now) or (end_date and end_date > now):
+                flash("현재보다 미래로 설정할 수 없습니다.", "warning")
+
+            # 시작일 > 종료일 검사
+            if start_date and end_date and start_date > end_date:
+                flash("시작일은 종료일보다 빠를 수 없습니다.", "warning")
+            else:
+                # 미래 날짜 제한은 메시지 출력 후 진행
+                if start_date and start_date > now:
+                    start_date = None
+                if end_date and end_date > now:
+                    end_date = now
+
+                # 실제 필터
+                if start_date:
+                    query = query.filter(Video.end_time >= start_date)
+                if end_date:
+                    end_of_day = datetime(end_date.year, end_date.month, end_date.day, 23, 59, 59)
+                    query = query.filter(Video.created_at <= end_of_day)
+
+        except ValueError:
+            flash("날짜 형식이 잘못되었습니다.", "danger")
+
+
+    # 페이지네이션 처리
+    page = request.args.get("page", 1, type=int)
+    per_page = 3  # 한 페이지에 표시할 비디오 개수
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+
+    # 비디오 객체에 detected_objects_list 속성 추가
+    for video in pagination.items:
+        if video.detected_objects:
+            video.detected_objects_list = re.split(r'[,\s]+', video.detected_objects.strip())
+        else:
+            video.detected_objects_list = []
+
+    return render_template(
+        "server/videos.html",
+        videos=pagination.items,
+        cameras=cameras,
+        pagination=pagination,
+        search_label=search_label,
+        form=DeleteForm()
+    )
+
+"""
+기간 검색 -> 언제부터 언제까지 설정해서 시작 시간 and 종료 시간이 하나라도 포함되면 나타나게끔 
+"""
 
 
 @streaming.route("/video_feed/<filename>")
@@ -315,27 +379,28 @@ def video_feed(filename):
 
     return Response(generate(), mimetype="video/mp4")
 
-@streaming.route("/videos/search", methods=["GET"])
-def search():
-    
-    videos = Video.query.filter_by(user_id=current_user.id).order_by(Video.created_at.desc()).all()
+@streaming.route("/videos/delete", methods=["POST"])
+@login_required
+def delete_videos():
+    user_id = current_user.id
+    selected_videos = request.form.getlist("selected_videos")
+    if not selected_videos:
+        flash("삭제할 동영상을 선택해주세요.", "warning")
+        return redirect(url_for("streaming.video_storage"))
 
-    search_text = request.args.get("search")
-    label_tag_dict = {}
-    filtered_videos = []
+    try:
+        for filename in selected_videos:
+            video = Video.query.filter_by(user_id=user_id, filename=filename).first()
+            if video:
+                file_path = os.path.join(VIDEO_STORAGE_PATH, video.filename)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                db.session.delete(video)
+        db.session.commit()
+        flash("선택한 동영상을 삭제했습니다.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"동영상 삭제 중 오류가 발생했습니다: {e}", "danger")
+        logging.error(f"Error deleting videos: {e}")
 
-    for video in videos:
-        if not search_text:
-            label_tag = (db.session.query(Video).filter(Video.detected_objects)).all()
-        else:
-            label_tag = (db.session.query(Video).filter(Video.detected_objects)).filter(Video.detected_objects.like("%"+search_text+"%")).all()
-            if not videos:
-                continue
-            
-            label_tag = (db.session.query(Video).filter(Video.detected_objects)).all()
-
-        label_tag_dict[videos.video.label_tag] = label_tag
-
-        filtered_videos.append(video)
-        delete_form
-    return render_template("server/videos.html")
+    return redirect(url_for("streaming.video_storage"))
