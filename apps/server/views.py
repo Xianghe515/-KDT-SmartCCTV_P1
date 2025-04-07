@@ -31,11 +31,13 @@ streaming = Blueprint(
     __name__,
     template_folder="templates",
 )
+BLUR_RADIUS = 25  # 사람 전체 블러 강도
 VIDEO_STORAGE_PATH = "./apps/server/static/videos"  # 저장할 비디오 폴더 경로
 
 engine = create_engine('mysql+pymysql://knockx2:knockx2@localhost/knockx2')
 Session = scoped_session(sessionmaker(bind=engine))
 session = Session()
+
 
 @streaming.route("/index")
 def index():
@@ -85,147 +87,183 @@ def yolo_video(camera_id):
     ip_address = cam.ip_address
     stream_url = f"http://{ip_address}:8000/"
 
-    ncnn_model = YOLO("./yolo11/yolo11n_ncnn_model")
-    
-    colors = np.random.uniform(0, 255, size=(len(ncnn_model.names), 3))
+    # YOLO 모델 초기화
+    try:
+        ncnn_model = YOLO(".\yolo11\yolo11n_ncnn_model")
+        print("YOLO 모델 로드 성공")
+    except Exception as e:
+        print(f"YOLO 모델 로드 실패: {str(e)}")
+        return f"모델 로드 실패: {str(e)}"
 
+    colors = np.random.uniform(0, 255, size=(len(ncnn_model.names), 3))
     stream = VideoStream(stream_url)
-    
     fourcc = cv.VideoWriter_fourcc(*'avc1')
-    
+
+    # 녹화 관련 변수 초기화
     is_recording = False
     video_writer = None
     last_detection_time = None
     recording_start_time = None
-    recording_end_time = None
-    min_record_duration = 5  # 최소 녹화 시간 (초)
-    countdown_timer = 0 # 카운트다운 타이머 추가
-    detection_start_time = None # 감지 시작 시간 변수 추가
-    detection_delay = 5 # 녹화 시작 전 감지 유지 시간 (초)
+    target_class_indices = [0]  # 감지할 객체 클래스 (0번 인덱스만 해당 - 사람)
+    detection_interval = 60  # 1분 단위 녹화 확인 간격 (초)
+    last_check_time = time.time()
+    objects_detected_this_interval = False
+    object_disappeared_time = None
+    recorded_filename = None
 
     if not os.path.exists(VIDEO_STORAGE_PATH):
         os.makedirs(VIDEO_STORAGE_PATH)
+        print(f"비디오 저장 경로 생성: {VIDEO_STORAGE_PATH}")
 
     def generate_frames():
-        nonlocal is_recording, video_writer, last_detection_time, recording_start_time, recording_end_time, countdown_timer, detection_start_time
-        detected_objects_in_frame = []
+        nonlocal is_recording, video_writer, last_detection_time, recording_start_time, target_class_indices, last_check_time, objects_detected_this_interval, object_disappeared_time, recorded_filename
+
+        current_interval_start_time = time.time()
+        print("프레임 생성 시작 (YOLO with Person Blur)")
 
         while True:
             frame = stream.get_frame()
             if frame is None:
+                print("프레임 읽기 실패 (YOLO)")
                 continue
 
             img = frame.copy()
             results = ncnn_model(img)
-            detected = False
+            detected_in_frame = False
 
-            now = datetime.datetime.now()
-            current_time = now.strftime("%Y-%m-%d %H:%M:%S")
-            cv.putText(
-                img,
-                current_time,
-                (img.shape[1] - 280, img.shape[0] - 20),
-                cv.FONT_HERSHEY_DUPLEX,
-                0.7,
-                (83, 115, 219),
-                2,
-            )
+            # 현재 시간을 이미지에 추가
+            now = datetime.now()
+            current_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
+            cv.putText(img, current_time_str, (img.shape[1] - 280, img.shape[0] - 20), cv.FONT_HERSHEY_DUPLEX, 0.7, (83, 115, 219), 2)
 
             for result in results:
                 for box in result.boxes:
                     x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                     conf = box.conf[0].item()
                     cls = box.cls[0].item()
-                    class_name = ncnn_model.names[int(cls)]
-                    if conf >= 0.40:
-                        detected = True
-                        detected_objects_in_frame.append(class_name)
-                        color = colors[int(cls)]
+                    class_index = int(cls)
+
+                    if class_index in target_class_indices and conf >= 0.40:
+                        detected_in_frame = True
+                        color = colors[class_index]
                         cv.rectangle(img, (int(x1), int(y1)), (int(x2), int(y2)), color, 3)
-                        cv.putText(
-                            img,
-                            f"{class_name} {conf:.2f}",
-                            (int(x1), int(y1) - 10),
-                            cv.FONT_HERSHEY_SIMPLEX,
-                            0.8,
-                            color,
-                            3,
-                        )
-                        break  # 하나의 객체라도 감지되면 녹화 시작/유지
-                        
+                        cv.putText(img, f"{ncnn_model.names[class_index]} {conf:.2f}", (int(x1), int(y1) - 10), cv.FONT_HERSHEY_SIMPLEX, 0.8, color, 3)
+                        print(f"객체 감지됨 (YOLO): {ncnn_model.names[class_index]}, 신뢰도: {conf:.2f}")
 
-                if detected:
-                    break
+                        # 사람(class_index == 0) 감지 시 블러 처리
+                        person_roi = img[int(y1):int(y2), int(x1):int(x2)]
+                        if not person_roi.size == 0:
+                            blurred_person = cv.GaussianBlur(person_roi, (BLUR_RADIUS, BLUR_RADIUS), 0)
+                            img[int(y1):int(y2), int(x1):int(x2)] = blurred_person
+                            print("사람 객체 블러 처리됨")
 
-            if detected:
-                last_detection_time = datetime.datetime.now()
-                countdown_timer = 0
-                if not is_recording:
-                    is_recording = True
-                    recording_start_time = datetime.datetime.now()
-                    filename = f"{user_name}_{camera_id}_{now.strftime('%Y%m%d_%H%M%S')}.mp4"
-                    filepath = os.path.join(VIDEO_STORAGE_PATH, filename)
-                    video_writer = cv.VideoWriter(filepath, fourcc, 20.0, (img.shape[1], img.shape[0]))
-                    print("─" * 81)
-                    print(f"\t녹화 시작: {filepath}")
-                    print("─" * 81)
+            current_time = time.time()
+            if current_time - current_interval_start_time >= detection_interval:
+                print(f"{detection_interval}초 경과, 객체 감지 여부 확인 (YOLO)")
+                if not objects_detected_this_interval and not is_recording and video_writer is None:
+                    print("1분 동안 객체 미감지, 시스템 초기화 준비 (YOLO)")
+                    pass # 실제 초기화 로직 (변수 리셋 등) 필요
+                    print("시스템 초기화 완료 (미감지) (YOLO)")
+                objects_detected_this_interval = False
+                current_interval_start_time = current_time
 
-            if is_recording:
+            if detected_in_frame:
+                if not objects_detected_this_interval:
+                    print("새로운 감지 간격 시작 및 객체 감지 (YOLO)")
+                    objects_detected_this_interval = True
+                    last_detection_time = now
+                    if not is_recording:
+                        print("녹화 시작 조건 충족 (YOLO)")
+                        is_recording = True
+                        recording_start_time = now
+                        filename = f"{user_name}_{camera_id}_{now.strftime('%Y%m%d_%H%M%S')}.mp4"
+                        recorded_filename = os.path.join(VIDEO_STORAGE_PATH, filename)
+                        video_writer = cv.VideoWriter(recorded_filename, fourcc, 20.0, (img.shape[1], img.shape[0]))
+                        print(f"녹화 시작: {recorded_filename} (YOLO)")
+                    object_disappeared_time = None
+                else:
+                    last_detection_time = now
+                    if is_recording and object_disappeared_time is not None:
+                        print("객체 재감지, 사라짐 타이머 초기화 (YOLO)")
+                        object_disappeared_time = None # 객체 재감지 시 사라짐 타이머 초기화
+
+            elif is_recording and object_disappeared_time is None:
+                # 객체가 사라진 시점 기록
+                object_disappeared_time = now
+                print("객체 사라짐 감지, 10초 카운트 시작 (YOLO)")
+            elif is_recording and object_disappeared_time is not None:
+                # 객체 사라진 후 10초 경과 확인
+                elapsed_since_disappeared = (now - object_disappeared_time).total_seconds()
+                print(f"객체 사라짐 후 {elapsed_since_disappeared:.0f}초 경과 (YOLO)")
+                # time.sleep(1)
+                if elapsed_since_disappeared >= 10:
+                    print("객체 사라진 후 10초 경과, 녹화 종료 및 저장 (YOLO)")
+                    is_recording = False
+                    video_writer.release()
+                    video_writer = None
+                    recording_end_time = now
+                    print(f"녹화 종료 및 저장 완료: {recorded_filename} (YOLO)")
+                    # 데이터베이스에 저장
+                    detected_objects_names = [ncnn_model.names[int(res.boxes.cls[0].item())] for res in results if res.boxes and int(res.boxes.cls[0].item()) in target_class_indices]
+                    new_video = Video(
+                        user_id=user_id,
+                        camera_id=camera_id,
+                        filename=os.path.basename(recorded_filename),
+                        created_at=recording_start_time,
+                        end_time=recording_end_time,
+                        duration=(recording_end_time - recording_start_time).total_seconds(),
+                        detected_objects=", ".join(detected_objects_names),
+                    )
+                    session.add(new_video)
+                    session.commit()
+                    print(f"데이터베이스 저장 완료: {new_video.filename} (YOLO)")
+                    recorded_filename = None # 초기화
+                    object_disappeared_time = None # 초기화
+                    objects_detected_this_interval = False # 다음 1분 간격 시작을 위해 초기화
+            elif elapsed_since_disappeared < 10 and not detected_in_frame:
+                # 10초 이내에 사라졌지만 아직 녹화 중
+                pass
+            elif not detected_in_frame and is_recording and object_disappeared_time is None:
+                # 감지 안되고 녹화 중인데 사라짐 시간 기록 안됨 (초기 사라짐 후 바로 미감지)
+                object_disappeared_time = now
+                print("객체 사라짐 감지 (10초 이내) (YOLO)")
+                time.sleep(10) # 10초 대기 후 녹화 종료 및 삭제
+                is_recording = False
+                if video_writer:
+                    video_writer.release()
+                    video_writer = None
+                    print("객체 10초 이내 사라짐, 녹화 삭제 준비 (YOLO)")
+                    if recorded_filename and os.path.exists(recorded_filename):
+                        os.remove(recorded_filename)
+                        print(f"녹화 삭제 완료: {recorded_filename} (YOLO)")
+                    recorded_filename = None
+                    object_disappeared_time = None
+                    objects_detected_this_interval = False # 다음 1분 간격 시작을 위해 초기화
+            else:
+                print("녹화 중이 아닌데 객체 사라짐 감지됨 (무시) (YOLO)")
+
+
+            if is_recording and video_writer is not None:
                 video_writer.write(img)
-                elapsed_time = (datetime.datetime.now() - (last_detection_time if last_detection_time else recording_start_time)).total_seconds()
-                total_elapsed_time = (datetime.datetime.now() - recording_start_time).total_seconds()
+            elif not is_recording and video_writer is not None:
+                print("녹화 종료 (비정상?), VideoWriter 해제 (YOLO)")
+                video_writer.release()
+                video_writer = None
+                recorded_filename = None
+                object_disappeared_time = None
+                objects_detected_this_interval = False
 
-                if not detected:
-                    if countdown_timer > 0:
-                        print("─" * 81)
-                        print(f"\t\t감지 대상이 없습니다. {countdown_timer}초 후 녹화를 종료합니다.")
-                        print("─" * 81)
-                        countdown_timer -= 1
-                        time.sleep(1)
-                        if countdown_timer == 0:
-                            is_recording = False
-                            video_writer.release()
-                            video_writer = None
-                            print("─" * 81)
-                            print("\t\t\t\t   녹화 종료")
-                            print("─" * 81)
-                            filename = f"{user_name}_{camera_id}_{recording_start_time.strftime('%Y%m%d_%H%M%S')}.mp4"
-                            recording_end_time = datetime.datetime.now()
-                            detected_objects = list(set(detected_objects_in_frame))  # 중복 제거
-                            detected_objects_str = ",".join(detected_objects)  # 리스트를 문자열로 변환
-                            new_video = Video(
-                                user_id=user_id,
-                                camera_id=camera_id,
-                                filename=filename,
-                                created_at=recording_start_time,
-                                duration=total_elapsed_time,
-                                detected_objects=detected_objects_str,
-                                end_time=recording_end_time,
-                            )
-                            print(detected_objects)
-                            session.add(new_video)
-                            session.commit()
-
-                    elif elapsed_time >= min_record_duration and countdown_timer == 0:
-                        countdown_timer = 5
-                # 감지된 대상이 있고 녹화 중이면 last_detection_time 업데이트
-                elif detected:
-                    pass
-                # 아직 최소 녹화 시간을 채우지 못했으면 계속 녹화
-                elif not detected and total_elapsed_time < min_record_duration:
-                    pass # 녹화 유지
-
-            if is_recording:
-                video_writer.write(img)
             _, buffer = cv.imencode('.jpg', img)
             frame_bytes = buffer.tobytes()
             yield (b'--frame\r\n'
                    b'Content-Type:image/jpeg\r\n'
                    b'Content-Length: ' + f"{len(frame_bytes)}".encode() + b'\r\n'
                    b'\r\n' + frame_bytes + b'\r\n')
+        print("프레임 생성 종료 (YOLO with Person Blur)")
 
     response = Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
     response.call_on_close(stream.stop)
+    print("YOLO 스트리밍 응답 반환 (with Person Blur)")
     return response
 
 @streaming.route("/live/<camera_id>")
