@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm  # type:ignore
-from wtforms import PasswordField, StringField, SubmitField, FieldList, FormField, IntegerField  # type:ignore
+from wtforms import PasswordField, StringField, SubmitField, FieldList, FormField, HiddenField  # type:ignore
 from wtforms.validators import DataRequired, Email, Length  # type:ignore
 from wtforms.validators import Regexp, Optional, ValidationError
 
@@ -114,6 +114,7 @@ def validate_ip_range(form, field):
         raise ValidationError("0~255 사이의 숫자여야 합니다.")
     
 class SingleDeviceForm(FlaskForm):
+    camera_id = HiddenField()
     device_id = StringField(
         "일련번호",
         validators=[

@@ -135,83 +135,49 @@ def modify_pw(user_id):
 @auth.route("/users/<user_id>/register_device", methods=["GET", "POST"])
 @login_required
 def register_device(user_id):
-    user = User.query.get_or_404(user_id)
+    user = User.query.get(user_id)
     cameras = Camera.query.filter_by(user_id=user_id).all()
-    form = DeviceForm(devices=[{'device_id': cam.device_id,
-                                     'device_name': cam.device_name,
-                                     'ip_address_1': cam.ip_address.split('.')[0],
-                                     'ip_address_2': cam.ip_address.split('.')[1],
-                                     'ip_address_3': cam.ip_address.split('.')[2],
-                                     'ip_address_4': cam.ip_address.split('.')[3],
-                                     'camera_id': cam.camera_id} for cam in cameras])
-    device_count = len(form.devices)
-
+    form = DeviceForm(devices=[{'device_id': cam.device_id, 
+                                'device_name':cam.device_name,
+                                'ip_address_1': cam.ip_address.split('.')[0],
+                                'ip_address_2': cam.ip_address.split('.')[1],
+                                'ip_address_3': cam.ip_address.split('.')[2],
+                                'ip_address_4': cam.ip_address.split('.')[3]} for cam in cameras])
+    device_count = len(form.devices)  # 현재 장치 수 계산
     if "add_device" in request.form:
-        form.devices.append_entry()
-        return render_template("auth/register_device.html", form=form, user=user, device_count=device_count + 1)
+            form.devices.append_entry()
+            return render_template("auth/register_device.html", form=form, user=user, device_count=device_count + 1)  # 폼 추가 후 페이지 다시 렌더링
     if "delete_device" in request.form:
-        if form.devices:
             form.devices.pop_entry()
-        return render_template("auth/register_device.html", form=form, user=user, device_count=len(form.devices))
+            return render_template("auth/register_device.html", form=form, user=user, device_count=device_count - 1)  # 폼 삭제 후 페이지 다시 렌더링
 
-    if form.validate_on_submit():
-        registered = False
-        updated = False
-        deleted = False
-        submitted_camera_ids = set()
-        for device_form in form.devices:
-            full_ip = device_form.form.get_full_ip()
-            device_id = device_form.form.device_id.data
-            device_name = device_form.form.device_name.data
-            camera_id = device_form.form.camera_id.data
+    if form.validate_on_submit():  # 폼 유효성 검증
+      #   if "add_device" in request.form:
+      #       form.devices.append_entry()
+      #       return render_template("auth/register_device.html", form=form, user=user, device_count=device_count + 1)  # 폼 추가 후 페이지 다시 렌더링
+      #   else:
+      for device_form in form.devices:
+            full_ip = device_form.get_full_ip()
+            device_id = device_form.device_id.data
+            device_name = device_form.device_name.data
 
-            submitted_camera_ids.add(camera_id)
+            existing_device = Camera.query.filter_by(device_id=device_id).all()
+            if existing_device and existing_device not in cameras:
+                  flash(f"이미 등록된 일련번호({device_id})입니다.", "danger")
+                  continue
 
-            existing_device = Camera.query.filter_by(camera_id=camera_id, user_id=user.id).first()
-
-            if existing_device:
-                was_updated = False
-                if existing_device.ip_address != full_ip:
-                    existing_device.ip_address = full_ip
-                    was_updated = True
-                if existing_device.device_name != device_name:
-                    existing_device.device_name = device_name
-                    was_updated = True
-                if existing_device.device_id != device_id:
-                    existing_device.device_id = device_id
-                    was_updated = True
-                if was_updated:
-                    updated = True
+            cam = Camera(device_id=device_id, user_id=user.id, ip_address=full_ip, device_name=device_name)
+            if existing_device and existing_device in cameras:
+                  existing_device.ip_address = full_ip
+                  existing_device.device_id = device_id
+                  existing_device.device_name = device_name
             else:
-                new_device = Camera(device_id=device_id, user_id=user.id, ip_address=full_ip, device_name=device_name)
-                db.session.add(new_device)
-                registered = True
+                  db.session.add(cam)
 
-        # 삭제된 기기 처리
-        existing_camera_ids = {str(cam.camera_id) for cam in cameras}
-        deleted_ids = existing_camera_ids - submitted_camera_ids
-
-        for deleted_id_str in deleted_ids:
-            if deleted_id_str.isdigit():
-                camera_to_delete = Camera.query.get(int(deleted_id_str))
-                if camera_to_delete and camera_to_delete.user_id == user.id:
-                    db.session.delete(camera_to_delete)
-                    deleted = True
-
-        if registered is False and updated is False and deleted is False :
-            flash("변경된 기기 정보가 없습니다.", "info")
-        elif updated:
-            db.session.commit()
-            flash("기기 정보가 수정되었습니다.", "success")
-        elif deleted:
-            db.session.commit()
-            flash("기기 정보가 삭제되었습니다.", "success")
-        else:
-            db.session.commit()
-            flash("기기 정보가 등록되었습니다.", "success")
-
-        return redirect(url_for('auth.register_device', user_id=user.id))
-
+      db.session.commit()
+      # flash("기기 등록이 완료되었습니다.", "success")
+      return render_template("auth/register_device.html", form=form, user=user, device_count=device_count)
+        
     else:
         if request.method == "POST":
             for field, errors in form.errors.items():
