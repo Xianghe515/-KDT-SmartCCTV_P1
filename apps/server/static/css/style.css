@@ -318,3 +318,51 @@ input[type="date"] {
     transform: translate(-50%, -50%);
     left: 50%;
 }
+
+.carousel-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  perspective: 1000px;
+  position: relative;
+  height: 500px;
+  gap: 0;
+}
+.carousel-card {
+  position: absolute;
+  width: 26rem;
+  transition: transform 0.5s ease, z-index 0.5s ease, opacity 0.5s ease;
+  cursor: pointer;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  transform: scale(0.8);
+  z-index: 1;
+  opacity: 0.6;
+}
+.carousel-card.active {
+  transform: scale(1) translateY(-10px);
+  z-index: 10;
+  opacity: 1;
+}
+.carousel-card img {
+  width: 100%;
+  object-fit: cover;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+.card-body {
+  height: 150px;
+  padding: 10px 16px;
+  text-align: center;
+}
+.btn-watch {
+  display: inline-block;
+  padding: 6px 16px;
+  background-color: #0D1B2A;
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  margin-top: 30px;
+}

@@ -29,7 +29,6 @@
   
 <form method="POST" action="{{ url_for('streaming.delete_videos') }}">
   {{ form.csrf_token() }}
-
   <div class="container" style="display: flexbox; width: fit-content;">
     {% if videos %}
     <div class="select-delete-button gap-4 text-sm text-gray-600">
@@ -136,7 +135,8 @@
       let player = new Plyr(video, {
         settings: ['speed'],
         controls: ['play', 'progress', 'current-time', 'rewind', 'fast-forward', 'settings', 'fullscreen'],
-        speed: { selected: 1, options: [0.5, 1, 1.5, 2, 3] }
+        speed: { selected: 1, options: [0.5, 1, 1.5, 2, 3] },
+        seekTime : 5
       });
       players.push(player);
     });

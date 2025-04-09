@@ -76,6 +76,25 @@ def video(camera_id):
 
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+# @streaming.route("/snapshot/<camera_id>")
+# @login_required
+# def snapshot(camera_id):
+#     user_id = current_user.id
+#     cam = Camera.query.filter_by(user_id=user_id, camera_id=camera_id).first()
+#     ip_address = cam.ip_address
+#     try:
+#         cap = cv.VideoCapture(f"http://{ip_address}:8000/")
+#         ret, frame = cap.read()
+#         cap.release()
+#     except:
+#         print("스냅샷 실패")
+#         return '', 500
+
+#     if not ret:
+#         return '', 500
+
+#     _, buffer = cv.imencode('.jpg', frame)
+#     return Response(buffer.tobytes(), mimetype='image/jpeg')
 
 @streaming.route("/yolo_video/<camera_id>")
 @login_required
@@ -383,15 +402,51 @@ def video_feed(filename):
     if not os.path.exists(file_path):
         return "비디오 파일을 찾을 수 없습니다.", 404
 
-    def generate():
-        with open(file_path, "rb") as f:
-            while True:
-                chunk = f.read(4096)
-                if not chunk:
-                    break
-                yield chunk
+    file_size = os.path.getsize(file_path)
+    range_header = request.headers.get('Range')
 
-    return Response(generate(), mimetype="video/mp4")
+    if range_header:
+        try:
+            byte_range = range_header.split('=')[1]
+            ranges = byte_range.split('-')
+            start = int(ranges[0]) if ranges[0] else 0
+            end = int(ranges[1]) if len(ranges) > 1 and ranges[1] else file_size - 1
+        except (ValueError, IndexError):
+            return "Invalid Range header", 400
+
+        chunk_size = 4096
+        start = max(0, start)
+        end = min(end, file_size - 1)
+        length = end - start + 1
+
+        def generate():
+            with open(file_path, 'rb') as f:
+                f.seek(start)
+                bytes_read = 0
+                while bytes_read < length:
+                    chunk = f.read(min(chunk_size, length - bytes_read))
+                    if not chunk:
+                        break
+                    yield chunk
+                    bytes_read += len(chunk)
+
+        response = Response(generate(), 206, mimetype='video/mp4',
+                            content_type='video/mp4',
+                            headers={
+                                'Content-Range': f'bytes {start}-{end}/{file_size}',
+                                'Accept-Ranges': 'bytes',
+                                'Content-Length': str(length)
+                            })
+        return response
+    else:
+        def generate():
+            with open(file_path, "rb") as f:
+                while True:
+                    chunk = f.read(4096)
+                    if not chunk:
+                        break
+                    yield chunk
+        return Response(generate(), mimetype="video/mp4")
 
 
 @streaming.route("/videos/delete", methods=["POST"])
