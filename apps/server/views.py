@@ -47,9 +47,9 @@ def home():
     if current_user.is_authenticated:
         cameras = Camera.query.filter_by(user_id=current_user.id).all()
         print(cameras)
-        return render_template("server/home.html", cameras=cameras)
+        return render_template("server/home.html", cameras=cameras, active_page='home')
     else:
-        return render_template("server/home.html")
+        return render_template("server/home.html", active_page='home')
 
 
 @streaming.route("/video/<camera_id>")
@@ -103,7 +103,7 @@ def yolo_video(camera_id):
 
     target_class_indices = [0]
     detection_interval = 30  # 인터벌 시간 (초)
-    BLUR_RADIUS = 51
+    BLUR_RADIUS = 1
 
     if not os.path.exists(VIDEO_STORAGE_PATH):
         os.makedirs(VIDEO_STORAGE_PATH)
@@ -124,10 +124,6 @@ def yolo_video(camera_id):
             video_writer = None
 
             frame = stream.get_frame()
-            if frame is None:
-                print("초기 프레임 없음. 대기 중...")
-                time.sleep(1)
-                continue
 
             height, width = frame.shape[:2]
             video_writer = cv.VideoWriter(recorded_filename, fourcc, 20.0, (width, height))
@@ -172,6 +168,7 @@ def yolo_video(camera_id):
                         print("🔵 감지됨")
                         detection_active = True
                         detection_start_time = time.time()
+                        detected_names = [ncnn_model.names[int(res.boxes.cls[0].item())] for res in results if res.boxes and int(res.boxes.cls[0].item()) in target_class_indices]
                     else:
                         print("🟢 감지 유지")
                         if time.time() - detection_start_time >= 10:
@@ -217,12 +214,10 @@ def yolo_video(camera_id):
                 video_writer.release()
 
             if interval_has_detection:
-                print("감지 감지됨 → DB 저장")
+                print("저장 조건 충족 → DB 저장")
                 created_at = datetime.fromtimestamp(interval_start_time)
                 end_time = datetime.now()
                 duration = (end_time - created_at).total_seconds()
-                detected_names = [ncnn_model.names[int(res.boxes.cls[0].item())]
-                                for res in results if res.boxes and int(res.boxes.cls[0].item()) in target_class_indices]
 
                 new_video = Video(
                     user_id=user_id,
@@ -235,6 +230,8 @@ def yolo_video(camera_id):
                 )
                 session.add(new_video)
                 session.commit()
+
+                
             else:
                 print("감지 없음 → 영상 삭제")
                 if os.path.exists(recorded_filename):

@@ -129,10 +129,10 @@ class SingleDeviceForm(FlaskForm):
               Length(0, 15, "15문자 이내로 입력해주세요."),
          ],
     )
-    ip_address_1 = StringField(validators=[DataRequired(), Regexp(r"^\d{1,3}$"), validate_ip_range])
-    ip_address_2 = StringField(validators=[DataRequired(), Regexp(r"^\d{1,3}$"), validate_ip_range])
-    ip_address_3 = StringField(validators=[DataRequired(), Regexp(r"^\d{1,3}$"), validate_ip_range])
-    ip_address_4 = StringField(validators=[DataRequired(), Regexp(r"^\d{1,3}$"), validate_ip_range])
+    ip_address_1 = StringField(validators=[DataRequired("IP 주소는 필수입니다."), Regexp(r"^\d{1,3}$"), validate_ip_range])
+    ip_address_2 = StringField(validators=[DataRequired("IP 주소는 필수입니다."), Regexp(r"^\d{1,3}$"), validate_ip_range])
+    ip_address_3 = StringField(validators=[DataRequired("IP 주소는 필수입니다."), Regexp(r"^\d{1,3}$"), validate_ip_range])
+    ip_address_4 = StringField(validators=[DataRequired("IP 주소는 필수입니다."), Regexp(r"^\d{1,3}$"), validate_ip_range])
 
 
     def get_full_ip(self):

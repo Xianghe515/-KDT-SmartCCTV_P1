@@ -59,7 +59,7 @@ def signup():
                   next_ = url_for("streaming.home")
                   return redirect(next_)
       
-      return render_template("auth/signup.html", form=form)
+      return render_template("auth/signup.html", form=form, active_page='signup')
 
 @auth.route("/login", methods=["GET", "POST"])
 def login():
@@ -76,7 +76,7 @@ def login():
             # 로그인 실패 메시지 설정
             flash("메일 주소 또는 비밀번호가 일치하지 않습니다.")
             
-      return render_template("auth/login.html", form=form)
+      return render_template("auth/login.html", form=form, active_page='login')
 
 @auth.route("/<user_id>")
 @login_required
@@ -84,7 +84,7 @@ def info(user_id):
       form = UpdateForm()
       user = User.query.get(user_id)
       
-      return render_template("auth/info.html", form=form, user=user)
+      return render_template("auth/info.html", form=form, user=user, active_page='info')
 
 @auth.route("/<user_id>/update", methods=["GET", "POST"])
 @login_required
@@ -216,7 +216,7 @@ def register_device(user_id):
         if request.method == "POST":
             for field, errors in form.errors.items():
                 for error in errors:
-                    flash(f"{getattr(form, field).label.text}: {error}", "danger")
+                    flash("")
 
     return render_template("auth/register_device.html", form=form, user=user, device_count=device_count)
 
@@ -225,3 +225,8 @@ def register_device(user_id):
 def logout():
       logout_user()
       return redirect(url_for("auth.login"))
+
+# 고객지원 엔드포인트
+@auth.route("/support")
+def support():
+     return render_template("auth/support.html", active_page='support')

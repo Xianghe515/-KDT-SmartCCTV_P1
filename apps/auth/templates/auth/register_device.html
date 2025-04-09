@@ -2,7 +2,7 @@
 block content %}
 <div class="relative flex h-[600px] bg-gray-100">
   <div class="absolute inset-0 flex items-center justify-end pr-24">
-    <div class="w-96 p-8 bg-white rounded-lg shadow-lg">
+    <div class="w-96 p-8 bg-white rounded-lg shadow-lg" style="overflow-y: auto; max-height: 500px;">
       <h2 class="text-2xl font-bold mb-6 text-center">기기 등록</h2>
       <section>
         <form
@@ -104,24 +104,24 @@ block content %}
                 <label style="top: 4.4px; left: 1.8px; padding: 3%"
                   >IP <span style="color: red; padding: 0%">*</span></label
                 >
-                {% if device_form.form.ip_address_1.errors %}
-                <div class="invalid-feedback" style="display: block">
-                  {{ device_form.form.ip_address_1.errors[0] }}
-                </div>
-                {% elif device_form.form.ip_address_2.errors %}
-                <div class="invalid-feedback" style="display: block">
-                  {{ device_form.form.ip_address_2.errors[0] }}
-                </div>
-                {% elif device_form.form.ip_address_3.errors %}
-                <div class="invalid-feedback" style="display: block">
-                  {{ device_form.form.ip_address_3.errors[0] }}
-                </div>
-                {% elif device_form.form.ip_address_4.errors %}
-                <div class="invalid-feedback" style="display: block">
-                  {{ device_form.form.ip_address_4.errors[0] }}
-                </div>
-                {% endif %}
               </div>
+              {% if device_form.form.ip_address_1.errors %}
+              <div class="invalid-feedback" style="display: block">
+                {{ device_form.form.ip_address_1.errors[0] }}
+              </div>
+              {% elif device_form.form.ip_address_2.errors %}
+              <div class="invalid-feedback" style="display: block">
+                {{ device_form.form.ip_address_2.errors[0] }}
+              </div>
+              {% elif device_form.form.ip_address_3.errors %}
+              <div class="invalid-feedback" style="display: block">
+                {{ device_form.form.ip_address_3.errors[0] }}
+              </div>
+              {% elif device_form.form.ip_address_4.errors %}
+              <div class="invalid-feedback" style="display: block">
+                {{ device_form.form.ip_address_4.errors[0] }}
+              </div>
+              {% endif %}
             </div>
             {% endfor %}
           </div>

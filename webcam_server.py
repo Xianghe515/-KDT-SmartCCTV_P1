@@ -3,9 +3,8 @@ import socketserver
 from http import server
 import cv2 as cv
 import sys
-import time
 
-cap = cv.VideoCapture(1)
+cap = cv.VideoCapture(0)
 cap.set(cv.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv.CAP_PROP_FRAME_HEIGHT, 480)
 if not cap.isOpened():
@@ -45,12 +44,8 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
-
-
-
-
 try:
-    address=('', 8090)
+    address=('', 8000)
     server = StreamingServer(address, StreamingHandler)
     print("Ctrl + c - stop server")
     server.serve_forever()
