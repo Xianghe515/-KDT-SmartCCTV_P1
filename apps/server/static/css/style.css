@@ -352,7 +352,7 @@ input[type="date"] {
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
 }
-.card-body {
+.ccard-body {
   height: 150px;
   padding: 10px 16px;
   text-align: center;

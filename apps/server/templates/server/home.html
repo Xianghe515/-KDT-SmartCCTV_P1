@@ -10,7 +10,7 @@
     <div class="carousel-card" data-index="{{ loop.index0 }}">
       <img src="{{ url_for('streaming.video', camera_id=camera.camera_id) }}"
            onerror="this.onerror=null; this.src = '../static/images/no_cam1.jpg';"/>
-      <div class="card-body">
+      <div class="ccard-body">
         <h5 class="font-bold text-2xl">{{ camera.device_name or 'Knockx2' }}</h5>
         <p>Device ID: {{ camera.device_id }}</p>
         <a href="{{ url_for('streaming.streaming_page', camera_id=camera.camera_id) }}" class="btn-watch">보기</a>
@@ -23,7 +23,7 @@
   <div class="d-flex justify-content-around gap-3" style="margin-top: 16px;">
     <div class="card" style="width: 25rem;">
         <img   src="../static/images/no_cam1.png" class="card-img-top" alt="no_camera" >
-        <div class="card-body">
+        <div class="ccard-body">
             <h5 class="card-title">Streaming</h5>
             <p class="card-text">등록된 기기가 없습니다.</p>
             <div class="btn_position">
@@ -38,7 +38,7 @@
 <div class="d-flex justify-content-around gap-3" style="margin-top: 16px;">
   <div class="card" style="width: 25rem;">
     <img  src="../static/images/no_cam1.png" class="card-img-top" alt="video" >
-    <div class="card-body">
+    <div class="ccard-body">
       <h5 class="card-title">Streaming</h5>
       <p class="card-text">로그인이 필요한 서비스입니다.</p>
       <div class="btn_position">

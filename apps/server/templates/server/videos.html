@@ -55,11 +55,24 @@
               {% endfor %}
             {% endif %}
           </p>
-          <div class="mt-auto btn_position">
-            <a href="{{ url_for('streaming.video_feed', filename=video.filename) }}"
-            class="dt-auth-btn bg-[#0D1B2A] text-white py-2 rounded-md hover:bg-sky-700 transition-colors"
-            style="text-align: center; width: 82px; max-height: 40px; min-width: 56px;" download="{{ video.filename }}">다운로드</a>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="blurToggle{{ loop.index }}">
+            <label class="form-check-label" for="blurToggle{{ loop.index }}">
+              블러 처리
+            </label>
           </div>
+          
+          <a href="{{ url_for('streaming.download_blurred_video', filename=video.filename) }}"
+             class="btn btn-outline-primary btn-sm"
+             id="blurDownload{{ loop.index }}"
+             style="display: none;"
+             download>블러 다운로드</a>
+          
+          <a href="{{ url_for('streaming.video_feed', filename=video.filename) }}"
+             class="btn btn-primary btn-sm"
+             id="originalDownload{{ loop.index }}"
+             download>원본 다운로드</a>
+          
         </div>
       </div>
       {% endfor %}
@@ -202,6 +215,20 @@
     autohide: true
   });
   
+  document.querySelectorAll('[id^=blurToggle]').forEach((checkbox, index) => {
+  checkbox.addEventListener('change', function() {
+    const blurBtn = document.getElementById(`blurDownload${index + 1}`);
+    const originalBtn = document.getElementById(`originalDownload${index + 1}`);
+    if (this.checked) {
+      blurBtn.style.display = 'inline-block';
+      originalBtn.style.display = 'none';
+    } else {
+      blurBtn.style.display = 'none';
+      originalBtn.style.display = 'inline-block';
+    }
+  });
+});
+
 </script>
 
 {% endblock %}
