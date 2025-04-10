@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, Response, jsonify, render_template, request, send_from_directory, send_file, flash, redirect, url_for, current_app
+from flask import Flask, Blueprint, Response, render_template, request, send_file, flash, redirect, url_for
 from flask_login import current_user, login_required
 import cv2 as cv
 from ultralytics import YOLO
@@ -22,7 +22,7 @@ from apps.Blur import Blur
 # dll을 못 불러오는 오류 발생         *dll - C언어 동적 라이브러리
 import ctypes  # c 동적 라이브러리 모듈
 # print(os.getcwd())
-ctypes.windll.LoadLibrary(r'C:\Users\PC\Desktop\-KDT-SmartCCTV_P1\openh264-1.8.0-win64.dll')
+ctypes.windll.LoadLibrary('./openh264-1.8.0-win64.dll')  # windll 라이브러리를 직접 로드하여 해결
 
 logging.getLogger("ultralytics").setLevel(logging.CRITICAL)
 
@@ -34,7 +34,6 @@ streaming = Blueprint(
 BLUR_RADIUS = 25  # 사람 전체 블러 강도
 VIDEO_STORAGE_PATH = "./apps/server/static/videos"  # 저장할 비디오 폴더 경로
 BLURRED_SAVE_PATH = "D:\\kim\\Yolo11\\apps\\server\\static\\blurred"
-
 engine = create_engine('mysql+pymysql://knockx2:knockx2@localhost/knockx2')
 Session = scoped_session(sessionmaker(bind=engine))
 session = Session()
@@ -459,15 +458,17 @@ def delete_videos():
 
     return redirect(url_for("streaming.video_storage"))
 
-#-------------------카톡메시지 전송 정보----------------------------
-@streaming.route('/video/upload', methods=['POST'])
-def upload_video():
-    # ... 영상 저장 로직 ...
-    video_title = "배회자 감지"  # 실제 감지 제목 또는 원하는 메시지
-    save_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-    message = f"[knockx2] {save_time}에 {video_title} 되었습니다!"
+@streaming.route("/download_blurred/<filename>")
+@login_required
+def download_blurred_video(filename):
+    input_path = os.path.join(VIDEO_STORAGE_PATH, filename)
+    blurred_filename = f"blurred_{filename}"
+    output_path = os.path.join(BLURRED_SAVE_PATH, blurred_filename)
 
-    if current_app.send_kakao_message(message):
-        return jsonify({"message": "영상 저장 완료 및 카카오톡 알림 전송 시도"})
-    else:
-        return jsonify({"message": "영상 저장 완료, 카카오톡 알림 전송 실패"})
+    if not os.path.exists(output_path):
+        success = Blur.apply_blur_to_video(input_path, output_path)
+        if not success:
+            flash("블러 처리에 실패했습니다.", "danger")
+            return redirect(url_for("streaming.video_storage"))
+
+    return send_file(output_path, as_attachment=True)
