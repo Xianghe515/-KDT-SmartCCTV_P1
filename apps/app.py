@@ -18,17 +18,19 @@ login_manager = LoginManager()
 login_manager.login_view = "auth.login"
 login_manager.login_message = ""
 
-def create_app(config_key="local"):  # 기본값 추가
+def create_app(config_key="local"):  # 기본값을 "local"로 변경
     app = Flask(__name__, static_folder="server/static")
 
     # 앱 구성 설정
     app.config.from_object(config[config_key])
-    app.config['SQLALCHEMY_DATABASE_URI'] = config[config_key].SQLALCHEMY_DATABASE_URI
-    app.config['SECRET_KEY'] = app.config.get('SECRET_KEY') or 'your_default_secret_key' # SECRET_KEY 설정
+
+    # MySQL 연결 URI 명시적으로 설정 (기존 설정을 덮어씀)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://knockx2:knockx2@localhost/knockx2'
+
+    app.config['SECRET_KEY'] = app.config.get('SECRET_KEY') or 'your_default_secret_key'
     # --- 카카오 REST API 키 및 Redirect URI 설정 ---
     app.config['KAKAO_REST_API_KEY'] = config[config_key].KAKAO_REST_API_KEY
     app.config['KAKAO_REDIRECT_URI'] = config[config_key].KAKAO_REDIRECT_URI
-   
     # ------------------------------
 
     # Flask 확장 초기화
