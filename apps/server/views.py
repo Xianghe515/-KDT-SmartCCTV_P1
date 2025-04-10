@@ -22,7 +22,7 @@ from apps.Blur import Blur
 # dll을 못 불러오는 오류 발생         *dll - C언어 동적 라이브러리
 import ctypes  # c 동적 라이브러리 모듈
 # print(os.getcwd())
-ctypes.windll.LoadLibrary(r'C:\Users\PC\Desktop\-KDT-SmartCCTV_P1\openh264-1.8.0-win64.dll')
+ctypes.windll.LoadLibrary('./openh264-1.8.0-win64.dll')  # windll 라이브러리를 직접 로드하여 해결
 
 logging.getLogger("ultralytics").setLevel(logging.CRITICAL)
 
