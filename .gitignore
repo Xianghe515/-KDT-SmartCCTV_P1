@@ -140,6 +140,7 @@ node_modules/
 package-lock.json
 package.json
 apps/server/static/videos
+*.mp4
 
 # Spyder project settings
 .spyderproject

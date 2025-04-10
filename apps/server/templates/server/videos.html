@@ -38,8 +38,8 @@
     </div>
     <div class="d-flex justify-content-center gap-3 flex-wrap">
       {% for video in videos %}
-      <div class="card video-card-wrapper" style="width: 320px; min-width: 260px; border-top-left-radius: 0; border-top-right-radius: 0;" data-filename="{{ video.filename }}">
-        <input type="checkbox" class="video-checkbox" name="selected_videos" value="{{ video.filename }}">
+      <div class="card video-card-wrapper" style="border: none; width: 320px; min-width: 260px;" data-filename="{{ video.filename }}">
+        <input type="checkbox" class="video-checkbox hidden" name="selected_videos" value="{{ video.filename }}" >
         <video class="card-img-top video-player plyr" controls onerror="this.onerror=null; this.src = '../static/images/no_cam.jpg';">
           <source src="{{ url_for('streaming.video_feed', filename=video.filename) }}" type="video/mp4">
         </video>
@@ -55,23 +55,25 @@
               {% endfor %}
             {% endif %}
           </p>
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" value="" id="blurToggle{{ loop.index }}">
+
+
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" value="" id="blurToggle{{ loop.index }}">
             <label class="form-check-label" for="blurToggle{{ loop.index }}">
-              블러 처리
+              인물 흐림 효과
             </label>
           </div>
-          
+
           <a href="{{ url_for('streaming.download_blurred_video', filename=video.filename) }}"
-             class="btn btn-outline-primary btn-sm"
+             class="custom-btn bg-[#0D1B2A] text-white py-2 rounded-md hover:bg-sky-700 transition-colors blur-button"
              id="blurDownload{{ loop.index }}"
              style="display: none;"
-             download>블러 다운로드</a>
+             download>다운로드</a>
           
           <a href="{{ url_for('streaming.video_feed', filename=video.filename) }}"
-             class="btn btn-primary btn-sm"
+             class="custom-btn bg-[#0D1B2A] text-white py-2 rounded-md hover:bg-sky-700 transition-colors"
              id="originalDownload{{ loop.index }}"
-             download>원본 다운로드</a>
+             download>다운로드</a>
           
         </div>
       </div>
