@@ -9,7 +9,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = 'your_secret_key'
     KAKAO_REST_API_KEY = '7d85993f53075a334012da8b7b2cfdc0'
-    KAKAO_REDIRECT_URI = 'http://localhost:8000/auth/kakao/callback' # 개발 환경에 맞게 수정
+    KAKAO_REDIRECT_URI = 'http://localhost:5000/auth/kakao/callback' # 개발 환경에 맞게 수정
 
 class LocalConfig(Config):  # Config 클래스를 상속받도록 수정
     DEBUG = True

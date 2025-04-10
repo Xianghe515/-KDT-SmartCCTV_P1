@@ -53,7 +53,3 @@ def create_app(config_key="local"):  # 기본값을 "local"로 변경
         return {'now': datetime.utcnow()}
 
     return app
-
-if __name__ == "__main__":
-    app = create_app("local")  # "local" 설정을 사용하여 앱 생성
-    app.run(debug=True, host="0.0.0.0", port=8000) # 외부 접속 허용 및 포트 변경
