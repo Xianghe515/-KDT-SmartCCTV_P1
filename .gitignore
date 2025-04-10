@@ -140,6 +140,7 @@ node_modules/
 package-lock.json
 package.json
 apps/server/static/videos
+apps/server/static/blurred
 
 # Spyder project settings
 .spyderproject
