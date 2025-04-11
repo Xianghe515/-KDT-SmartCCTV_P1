@@ -4,7 +4,7 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from apps.app import db
-from apps.auth.forms import LoginForm, SignUpForm, UpdateForm, PasswordForm, DeviceForm, SingleDeviceForm
+from apps.auth.forms import LoginForm, SignUpForm, UpdateForm, PasswordForm, DeviceForm, SingleDeviceForm, SupportForm
 from apps.auth.models import User, Camera
 from kakaotalk.auth.kakao_api import KakaoAPI
 
@@ -278,6 +278,10 @@ def kakao_callback():
                         print("@"*80)
                         # 기존 카카오 계정으로 가입된 사용자
                         login_user(user, remember=False)  # 자동 로그인 방지
+                        user.kakao_user_id=kakao_id,
+                        user.social_platform='kakao',
+                        user.kakao_access_token=access_token
+                        db.session.commit()
                         return redirect(url_for("streaming.home"))
                     else:                        
                         print("@"*80)
@@ -313,4 +317,6 @@ def kakao_callback():
 # 고객지원 엔드포인트
 @auth.route("/support")
 def support():
-     return render_template("auth/support.html", active_page='support')
+    form = SupportForm()
+    user = current_user
+    return render_template("auth/support.html", form=form, active_page='support', user=user)
