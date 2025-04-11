@@ -1,12 +1,11 @@
-# apps/auth/views.py
 from flask import Blueprint, flash, redirect, render_template, request, url_for
-from flask_login import login_required, current_user, login_user, logout_user  # type: ignore
+from flask_login import login_required, current_user, login_user, logout_user   # type: ignore
 from datetime import datetime
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from apps.app import db
 from apps.auth.forms import LoginForm, SignUpForm, UpdateForm, PasswordForm, DeviceForm, SingleDeviceForm
-from apps.auth.models import Camera, User
+from apps.auth.models import User, Camera
 from kakaotalk.auth.kakao_api import KakaoAPI
 
 auth = Blueprint(
@@ -14,7 +13,6 @@ auth = Blueprint(
       __name__,
       template_folder="templates",
 )
-
 @auth.route("/")
 def index():
       return render_template("auth/index.html")
@@ -115,7 +113,7 @@ def modify_pw(user_id):
             return redirect(url_for("auth.info", user_id=user_id))  # 이 부분에서 user_id를 제대로 전달
 
       if form.validate_on_submit():  # 폼 제출 및 유효성 검증
-            user.password = form.current_password.data
+            # user.password = form.current_password.data
             
             # 현재 비밀번호 확인
             if not check_password_hash(user.password_hash, form.current_password.data):
@@ -222,10 +220,33 @@ def register_device(user_id):
 
     return render_template("auth/register_device.html", form=form, user=user, device_count=device_count)
 
+# 로그아웃 엔드포인트
 @auth.route("/logout", methods=["POST"])
 def logout():
-    logout_user()
-    flash("로그아웃되었습니다.", "info")
+    """카카오 계정 연결 해제 처리"""
+    user = current_user
+    if user.social_platform == 'kakao':  # 카카오 계정으로 로그인한 사용자만 연결 해제 가능
+        kakao_api = KakaoAPI()
+        access_token = getattr(user, 'kakao_access_token', None)
+
+        if access_token:
+            unlink_result = kakao_api.kakao_logout(access_token)  # kakao_api의 연결 해제 함수 사용
+            print(f"카카오 연결 해제 결과: {unlink_result}")
+            if unlink_result.get('id') == user.kakao_user_id:
+                user.kakao_access_token = None  # Access Token 삭제
+                user.social_platform = None  # 소셜 플랫폼 정보 삭제
+                user.kakao_user_id = None # 카카오 User ID 삭제
+                db.session.commit()
+                logout_user()
+                flash("카카오 계정 연결이 해제되었습니다.", "success")
+            else:
+                flash("카카오 계정 연결 해제에 실패했습니다.", "danger")
+        else:
+            flash("카카오 Access Token이 없습니다.", "warning")
+    else:
+        logout_user()
+        flash("로그아웃되었습니다.", "info")
+
     return redirect(url_for("auth.login"))
 #-------------------------카카오톡---------------------------
 @auth.route("/kakao/login")
@@ -250,13 +271,18 @@ def kakao_callback():
                 kakao_nickname = user_info.get('properties', {}).get('nickname')
 
                 if kakao_id:
-                    user = User.query.filter_by(kakao_user_id=kakao_id).first()
+                    user = User.query.filter_by(email=kakao_email).first()
                     if user:
+                        print("@"*80)
+                        print("로그인 성공")
+                        print("@"*80)
                         # 기존 카카오 계정으로 가입된 사용자
                         login_user(user, remember=False)  # 자동 로그인 방지
-                        flash(f"{user.nickname or user.user_name or '카카오톡'}님, 카카오 계정으로 로그인되었습니다.", "success")
                         return redirect(url_for("streaming.home"))
-                    else:
+                    else:                        
+                        print("@"*80)
+                        print("로그인 실패")
+                        print("@"*80)
                         # 새로운 카카오 계정 사용자: 회원가입 처리
                         new_user = User(
                             kakao_user_id=kakao_id,  # 카카오 고유 ID 저장
@@ -264,12 +290,12 @@ def kakao_callback():
                             password=None,  # 소셜 로그인은 비밀번호 없음
                             nickname=kakao_nickname,  # 필요하다면 닉네임 저장
                             social_platform='kakao',  # 소셜 로그인 플랫폼 정보 저장
-                            user_name=str(kakao_id)  # 필요하다면 user_name에 임시로 카카오 id 저장 (선택 사항)
+                            user_name=kakao_nickname if kakao_nickname else str(kakao_id),  # 있으면 카카오 닉네임으로 없으면 카카오 id로 user_name
+                            kakao_access_token=access_token
                         )
                         db.session.add(new_user)
                         db.session.commit()
                         login_user(new_user, remember=False)  # 자동 로그인 방지
-                        flash(f"{new_user.nickname or new_user.user_name or '카카오톡'}님, 카카오 계정으로 회원가입 및 로그인되었습니다.", "success")
                         return redirect(url_for("streaming.home"))
                 else:
                     flash("카카오 로그인 실패: 사용자 정보를 가져오지 못했습니다.", "danger")
@@ -283,32 +309,6 @@ def kakao_callback():
     else:
         flash("카카오 로그인 실패: 인가 코드 없음", "danger")
         return redirect(url_for("auth.login"))
-
-@auth.route("/kakao/unlink", methods=["POST"])
-@login_required
-def kakao_unlink():
-    """카카오 계정 연결 해제 처리"""
-    user = current_user
-    if user.social_platform == 'kakao':  # 카카오 계정으로 로그인한 사용자만 연결 해제 가능
-        kakao_api = KakaoAPI()
-        access_token = getattr(user, 'kakao_access_token', None)
-
-        if access_token:
-            unlink_result = kakao_api.kakao_logout(access_token)  # kakao_api의 연결 해제 함수 사용
-            print(f"카카오 연결 해제 결과: {unlink_result}")
-            if unlink_result.get('id') == user.kakao_user_id:
-                user.kakao_access_token = None  # Access Token 삭제
-                user.social_platform = None  # 소셜 플랫폼 정보 삭제
-                user.kakao_user_id = None # 카카오 User ID 삭제
-                db.session.commit()
-                flash("카카오 계정 연결이 해제되었습니다.", "success")
-            else:
-                flash("카카오 계정 연결 해제에 실패했습니다.", "danger")
-        else:
-            flash("카카오 Access Token이 없습니다.", "warning")
-    else:
-        flash("카카오 계정으로 로그인한 사용자가 아닙니다.", "warning")
-    return redirect(url_for("auth.info", user_id=user.id)) # 예시: 사용자 정보 페이지로 리다이렉트
 
 # 고객지원 엔드포인트
 @auth.route("/support")

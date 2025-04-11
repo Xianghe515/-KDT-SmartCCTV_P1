@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, Response, render_template, request, send_file, flash, redirect, url_for
+from flask import Flask, Blueprint, Response, jsonify, render_template, request, send_file, flash, redirect, url_for, current_app
 from flask_login import current_user, login_required
 import cv2 as cv
 from ultralytics import YOLO
@@ -22,7 +22,7 @@ from apps.Blur import Blur
 # dll을 못 불러오는 오류 발생         *dll - C언어 동적 라이브러리
 import ctypes  # c 동적 라이브러리 모듈
 # print(os.getcwd())
-ctypes.windll.LoadLibrary('../openh264-1.8.0-win64.dll')  # windll 라이브러리를 직접 로드하여 해결
+ctypes.windll.LoadLibrary('./openh264-1.8.0-win64.dll')  # windll 라이브러리를 직접 로드하여 해결
 
 logging.getLogger("ultralytics").setLevel(logging.CRITICAL)
 
@@ -31,7 +31,6 @@ streaming = Blueprint(
     __name__,
     template_folder="templates",
 )
-BLUR_RADIUS = 25  # 사람 전체 블러 강도
 VIDEO_STORAGE_PATH = "./apps/server/static/videos"  # 저장할 비디오 폴더 경로
 BLURRED_SAVE_PATH = "D:\\kim\\Yolo11\\apps\\server\\static\\blurred"
 engine = create_engine('mysql+pymysql://knockx2:knockx2@localhost/knockx2')
@@ -105,7 +104,6 @@ def yolo_video(camera_id):
 
     target_class_indices = [0]
     detection_interval = 30  # 인터벌 시간 (초)
-    BLUR_RADIUS = 1
 
     if not os.path.exists(VIDEO_STORAGE_PATH):
         os.makedirs(VIDEO_STORAGE_PATH)
@@ -128,6 +126,9 @@ def yolo_video(camera_id):
             frame = stream.get_frame()
 
             height, width = frame.shape[:2]
+            print("@"*80)
+            print(frame.shape[:2])
+            print("@"*80)
             video_writer = cv.VideoWriter(recorded_filename, fourcc, 20.0, (width, height))
             print(f"녹화 시작: {recorded_filename}")
 
@@ -159,10 +160,6 @@ def yolo_video(camera_id):
                             cv.rectangle(img, (int(x1), int(y1)), (int(x2), int(y2)), color, 3)
                             cv.putText(img, f"{ncnn_model.names[class_index]} {conf:.2f}",
                                     (int(x1), int(y1) - 10), cv.FONT_HERSHEY_SIMPLEX, 0.8, color, 3)
-                            roi = img[int(y1):int(y2), int(x1):int(x2)]
-                            if roi.size != 0:
-                                blurred = cv.GaussianBlur(roi, (BLUR_RADIUS, BLUR_RADIUS), 0)
-                                img[int(y1):int(y2), int(x1):int(x2)] = blurred
 
                 # 감지 상태 처리
                 if detected_this_frame:
@@ -472,3 +469,16 @@ def download_blurred_video(filename):
             return redirect(url_for("streaming.video_storage"))
 
     return send_file(output_path, as_attachment=True)
+
+#-------------------카톡메시지 전송 정보----------------------------
+@streaming.route('/video/upload', methods=['POST'])
+def upload_video():
+    # ... 영상 저장 로직 ...
+    video_title = "배회자 감지"  # 실제 감지 제목 또는 원하는 메시지
+    save_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    message = f"[knockx2] {save_time}에 {video_title} 되었습니다!"
+
+    if current_app.send_kakao_message(message):
+        return jsonify({"message": "영상 저장 완료 및 카카오톡 알림 전송 시도"})
+    else:
+        return jsonify({"message": "영상 저장 완료, 카카오톡 알림 전송 실패"})

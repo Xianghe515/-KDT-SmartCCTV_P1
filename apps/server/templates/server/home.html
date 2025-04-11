@@ -13,7 +13,7 @@
       <div class="ccard-body">
         <h5 class="font-bold text-2xl">{{ camera.device_name or 'Knockx2' }}</h5>
         <p>Device ID: {{ camera.device_id }}</p>
-        <a href="{{ url_for('streaming.streaming_page', camera_id=camera.camera_id) }}" class="btn-watch">보기</a>
+        <a href="{{ url_for('streaming.streaming_page', camera_id=camera.camera_id) }}" class="btn-watch btn bg-[#0D1B2A] text-white py-2 rounded-md hover:bg-sky-700 transition-colors">보기</a>
       </div>
     </div>
     {% endfor %}
@@ -26,9 +26,9 @@
         <div class="ccard-body">
             <h5 class="card-title">Streaming</h5>
             <p class="card-text">등록된 기기가 없습니다.</p>
-            <div class="btn_position">
-                <a href="{{ url_for('auth.register_device', user_id=current_user.id)}}" class="dt-auth-btn bg-[#0D1B2A] text-white py-2 rounded-md hover:bg-sky-700 transition-colors" 
-                style="text-align: center; width: 90px; max-height: 40px; min-width: 56px;">기기 등록</a>
+            <div class="home_btn_position">
+                <a href="{{ url_for('auth.register_device', user_id=current_user.id)}}" class="btn bg-[#0D1B2A] text-white py-2 rounded-md hover:bg-sky-700 transition-colors" 
+                >기기 등록</a>
             </div>
         </div>
     </div>
@@ -41,7 +41,7 @@
     <div class="ccard-body">
       <h5 class="card-title">Streaming</h5>
       <p class="card-text">로그인이 필요한 서비스입니다.</p>
-      <div class="btn_position">
+      <div class="home_btn_position">
       <a href="{{  url_for('auth.login')  }}" class="btn bg-[#0D1B2A] text-white py-2 rounded-md hover:bg-sky-700 transition-colors">로그인</a>
     </div>
   </div>
@@ -50,7 +50,7 @@
 {% endif %}
 
 <div class="text-center mt-4">
-  <a href="{{ url_for('streaming.video_storage') }}" class="btn btn-dark">영상 보관</a>
+  <a href="{{ url_for('streaming.video_storage') }}" class="btn bg-[#0D1B2A] text-white py-2 rounded-md hover:bg-sky-700 transition-colors">영상 보관</a>
 </div>
 
 <script>
