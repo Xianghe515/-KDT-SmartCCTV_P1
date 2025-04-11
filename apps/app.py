@@ -22,8 +22,15 @@ def create_app(config_key):
     
     # 앱 구성 설정
     app.config.from_object(config[config_key])
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://knockx2:knockx2@localhost/knockx2'
     
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://knockx2:knockx2@localhost/knockx2'
+    # app.config['SQLALCHEMY_DATABASE_URI'] = config[config_key].SQLALCHEMY_DATABASE_URI
+    app.config['SECRET_KEY'] = app.config.get('SECRET_KEY')
+    # --- 카카오 REST API 키 및 Redirect URI 설정 ---
+    app.config['KAKAO_REST_API_KEY'] = config[config_key].KAKAO_REST_API_KEY
+    app.config['KAKAO_REDIRECT_URI'] = config[config_key].KAKAO_REDIRECT_URI
+    # ------------------------------
+
     # Flask 확장 초기화
     csrf.init_app(app)
     db.init_app(app)

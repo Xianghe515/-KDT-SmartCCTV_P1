@@ -13,14 +13,16 @@ class User(db.Model, UserMixin):
     __tablename__ = "Users"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)  # Primary Key
-    # user_id = db.Column(db.String(50), nullable=False, unique=True, index=True)
-    password_hash= db.Column(db.String(255), nullable=False)
+    password_hash= db.Column(db.String(255), nullable=True)
     user_name = db.Column(db.String(100), nullable=False, index=True)
     birth_date = db.Column(db.Date)
-    email = db.Column(db.String(100), nullable=False, unique=True, index=True)
+    email = db.Column(db.String(100), nullable=True, unique=False, index=True)
     phone_number = db.Column(db.String(15))
-    # device_id = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    nickname = db.Column(db.String(100))
+    social_platform = db.Column(db.String(20))
+    kakao_access_token = db.Column(db.String(255))
+    kakao_user_id = db.Column(db.BigInteger, unique=True, index=True)
 
     def __repr__(self):
         return f"<User {self.id}>"
@@ -33,7 +35,10 @@ class User(db.Model, UserMixin):
     # 비밀번호 설정을 위한 setter
     @password.setter
     def password(self, password):
-        self.password_hash = generate_password_hash(password)
+        if password:
+            self.password_hash = generate_password_hash(password)
+        else:
+            self.password_hash = None
 
     # 비밀번호 체크
     def verify_password(self, password):
