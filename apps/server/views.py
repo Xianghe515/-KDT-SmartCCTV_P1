@@ -125,10 +125,9 @@ def yolo_video(camera_id):
 
             frame = stream.get_frame()
 
-            height, width = frame.shape[:2]
-            print("@"*80)
-            print(frame.shape[:2])
-            print("@"*80)
+            # height, width = frame.shape[:2]
+            height = 480
+            width = 640
             video_writer = cv.VideoWriter(recorded_filename, fourcc, 20.0, (width, height))
             print(f"녹화 시작: {recorded_filename}")
 

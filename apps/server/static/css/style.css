@@ -425,3 +425,34 @@ input[type="date"] {
   .form-check {
     position: relative;
   }
+
+
+  .file-upload-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid #d1d5db; /* gray-300 */
+    border-radius: 0.375rem; /* rounded-md */
+    overflow: hidden;
+    margin-top: 10px;
+    height: 30px;
+  }
+
+  .file-upload-label {
+    background-color: #bad4e3;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .file-upload-input {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    outline: none;
+    height: auto;
+    width: 0;
+    margin: 0 5px 0 5px;
+  }
+  .file-upload-input::-webkit-file-upload-button {
+    display: none; /* 기본 버튼 숨김 */
+  }

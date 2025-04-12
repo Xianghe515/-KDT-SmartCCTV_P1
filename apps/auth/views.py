@@ -1,13 +1,26 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import login_required, current_user, login_user, logout_user   # type: ignore
+from flask_mail import Message
+from email.header import Header
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+import os
+import re
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-
+import uuid
+import smtplib
 from apps.app import db
+from apps.auth.forms import SupportForm
+from apps.auth.models import User
+import mimetypes
+from apps.app import db, mail
 from apps.auth.forms import LoginForm, SignUpForm, UpdateForm, PasswordForm, DeviceForm, SingleDeviceForm, SupportForm
 from apps.auth.models import User, Camera
 from kakaotalk.auth.kakao_api import KakaoAPI
-
+from email.header import Header
 auth = Blueprint(
       "auth",
       __name__,
@@ -314,9 +327,118 @@ def kakao_callback():
         flash("카카오 로그인 실패: 인가 코드 없음", "danger")
         return redirect(url_for("auth.login"))
 
-# 고객지원 엔드포인트
-@auth.route("/support")
+def to_ascii_filename(filename):
+    """파일명에서 ASCII 문자 외의 문자를 제거하거나 변환합니다."""
+    return re.sub(r'[^\x00-\x7F]+', '_', filename)
+
+@auth.route("/support", methods=["GET", "POST"])
 def support():
+    def send_simple_test_email(recipient_email, save_path, original_filename):
+        sender_email = "tkdgur8999@gmail.com"
+        sender_password = "jmso tyra tqcy ibjx"
+        subject_text = "[문의 접수 완료]", title
+        body_text = f"""문의 제목: {title}
+이메일: {email}
+내용:
+{text}
+
+첨부파일 원래 이름: {original_filename if original_filename else '없음'}
+
+빠른 시일 내에 답변 드리도록 하겠습니다.
+이용에 불편을 드려 죄송합니다.
+            """.strip()
+
+        if save_path:
+            print(f"File Size: {os.path.getsize(save_path)}") # 파일 크기 확인
+
+        msg = MIMEMultipart()
+        msg['Subject'] = Header(subject_text, 'utf-8')
+        msg['From'] = sender_email
+        msg['To'] = recipient_email
+
+        # 텍스트 본문 추가
+        msg.attach(MIMEText(body_text.encode('utf-8'), 'plain', 'utf-8'))
+
+        # 첨부파일 추가
+        if save_path and original_filename:
+            try:
+                mime_type, _ = mimetypes.guess_type(original_filename)
+                print(f"Guessed MIME Type: {mime_type}")
+                if mime_type is None:
+                    mime_type = "application/octet-stream"
+                maintype, subtype = mime_type.split('/', 1)
+
+                with open(save_path, 'rb') as attachment:
+                    part = MIMEBase(maintype, subtype)
+                    part.set_payload(attachment.read())
+
+                encoders.encode_base64(part)
+
+                filename_header = Header(original_filename, 'utf-8')
+                part.add_header(
+                    "Content-Disposition",
+                    f"attachment; filename=\"{filename_header}\"",
+                )
+                part.add_header("Content-Type", mime_type) # Explicitly set Content-Type
+
+                msg.attach(part)
+            except Exception as e:
+                print(f"첨부 파일 오류: {e}")
+
+        try:
+            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+                server.login(sender_email, sender_password)
+                server.sendmail(sender_email, [recipient_email], msg.as_string().encode('utf-8'))
+                print("이메일 전송 성공 (첨부파일 포함)")
+                return True
+        except Exception as e:
+            print(f"이메일 전송 실패 (첨부파일 포함): {e}")
+            return False
+
     form = SupportForm()
     user = current_user
+
+    if request.method == "POST":
+        if form.validate_on_submit():
+            print("summit 성공")
+            title = form.title.data
+            email = user.email if user.is_authenticated else form.email.data
+            text = form.text.data
+
+            uploaded_file = request.files.get("file")
+            original_filename = uploaded_file.filename if uploaded_file else None
+
+            ascii_filename = None
+            if original_filename:
+                ascii_filename = to_ascii_filename(original_filename)
+
+            if uploaded_file and uploaded_file.filename:
+                upload_dir = os.path.join(os.getcwd(), "./uploads")
+                os.makedirs(upload_dir, exist_ok=True)
+
+                ext = os.path.splitext(uploaded_file.filename)[1]
+                filename = f"{uuid.uuid4()}{ext}"
+                save_path = os.path.join(upload_dir, filename)
+                uploaded_file.save(save_path)
+            else:
+                save_path = None
+
+            try:
+                # Flask-Mail 대신 직접 작성한 함수 호출
+                if send_simple_test_email(email, save_path, ascii_filename if ascii_filename else original_filename):
+                    flash("문의가 접수되었으며, 이메일로 확인 메시지를 보냈습니다.", "success")
+                else:
+                    flash("문의는 접수되었지만 이메일 전송에 실패했습니다.", "warning")
+
+            except Exception as e:
+                print(f"이메일 전송 실패: {e}")
+                flash("문의는 접수되었지만 이메일 전송에 실패했습니다.", "warning")
+
+            return redirect(url_for("auth.support"))
+
+        else:
+            print("summit 실패")
+            print("폼 에러:", form.errors)
+            flash("입력 내용을 다시 확인해 주세요.", "danger")
+
     return render_template("auth/support.html", form=form, active_page='support', user=user)

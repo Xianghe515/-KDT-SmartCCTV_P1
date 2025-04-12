@@ -141,6 +141,7 @@ package-lock.json
 package.json
 apps/server/static/videos
 *.mp4
+uploads/
 
 # Spyder project settings
 .spyderproject
