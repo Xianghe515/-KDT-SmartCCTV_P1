@@ -148,3 +148,20 @@ class DeviceForm(FlaskForm):
 
 class DeleteForm(FlaskForm):
      submit = SubmitField("삭제")
+
+class SupportForm(FlaskForm):
+      email = StringField(
+            "메일 주소",
+            validators=[
+                  DataRequired("메일 주소는 필수입니다."),
+                  Email("메일 주소의 형식으로 입력해주세요."),
+            ],
+      )
+      text = StringField(
+           "문의 내용",
+           validators=[
+                  DataRequired("문의 내용을 입력해주세요."),
+                  Length(10, 500, "10문자 이상, 500문자 이내로 입력해주세요."),
+           ]
+      )
+      submit = SubmitField('제출')
