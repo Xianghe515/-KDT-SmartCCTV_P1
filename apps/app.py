@@ -46,6 +46,50 @@ def create_app(config_key):
     
     from apps.auth import views as auth_views
     app.register_blueprint(auth_views.auth, url_prefix="/auth")
+    
+    
+    #-----------------카카오 메시지 전송 함수 등록--------------------
+    import requests
 
+    def send_kakao_message(message):
+        kakao_token = app.config.get('KAKAO_ACCESS_TOKEN')
+        if not kakao_token:
+            print("카카오 Access Token이 설정되지 않았습니다.")
+            return False
+
+        headers = {
+            'Authorization': f'Bearer {kakao_token}',
+            'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+        }
+        data = {
+            # 'template_id': 12345, # 실제 템플릿 ID로 변경 (또는 text 사용)
+            # 'template_args': {
+            #     'message': message
+            # }
+            # 텍스트 메시지 전송
+            'object_type': 'text',
+            'text': message,
+            # 필요하다면 링크 추가
+            # 'link': {
+            #     'web_url': 'http://your-app.com/',
+            #     'mobile_web_url': 'http://your-app.com/'
+            # }
+        }
+        # url = 'https://kapi.kakao.com/v2/api/talk/memo/send' # 메시지 템플릿 API
+        url = 'https://kapi.kakao.com/v2/api/talk/memo/default/send' # 텍스트 메시지 API
+
+        try:
+            response = requests.post(url, headers=headers, data=data)
+            response.raise_for_status() # 실패 시 HTTPError 발생
+            print("카카오톡 메시지 전송 성공:", response.json())
+            return True
+        except requests.exceptions.RequestException as e:
+            print("카카오톡 메시지 전송 실패:", e)
+            if response is not None:
+                print("응답 내용:", response.text)
+            return False
+
+    app.send_kakao_message = send_kakao_message
+#--------------------------------------------------------------------
     
     return app

@@ -90,6 +90,7 @@ def yolo_video(camera_id):
     ip_address = cam.ip_address
     stream_url = f"http://{ip_address}:8000/"
 
+    print("camera_id address :",ip_address)
     # YOLO 모델 초기화
     try:
         ncnn_model = YOLO(".\\yolo11\\yolo11n_ncnn_model")
@@ -125,10 +126,8 @@ def yolo_video(camera_id):
 
             frame = stream.get_frame()
 
-            height, width = frame.shape[:2]
-            print("@"*80)
-            print(frame.shape[:2])
-            print("@"*80)
+            height= 480
+            width= 640
             video_writer = cv.VideoWriter(recorded_filename, fourcc, 20.0, (width, height))
             print(f"녹화 시작: {recorded_filename}")
 
@@ -229,6 +228,16 @@ def yolo_video(camera_id):
                 )
                 session.add(new_video)
                 session.commit()
+                
+#---------------------------메시지 전송---------------------------------------
+                video_title = "배회자 감지"  # 실제 감지 제목 또는 원하는 메시지
+                save_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+                message = f"[knockx2] {save_time}에 {video_title} 되었습니다!"
+
+                if current_app.send_kakao_message(message):
+                    print("카카오톡 알림 전송 시도 (성공)")
+                else:
+                    print("카카오톡 알림 전송 시도 (실패)")
 
                 
             else:
@@ -470,15 +479,3 @@ def download_blurred_video(filename):
 
     return send_file(output_path, as_attachment=True)
 
-#-------------------카톡메시지 전송 정보----------------------------
-@streaming.route('/video/upload', methods=['POST'])
-def upload_video():
-    # ... 영상 저장 로직 ...
-    video_title = "배회자 감지"  # 실제 감지 제목 또는 원하는 메시지
-    save_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-    message = f"[knockx2] {save_time}에 {video_title} 되었습니다!"
-
-    if current_app.send_kakao_message(message):
-        return jsonify({"message": "영상 저장 완료 및 카카오톡 알림 전송 시도"})
-    else:
-        return jsonify({"message": "영상 저장 완료, 카카오톡 알림 전송 실패"})
