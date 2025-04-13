@@ -16,7 +16,7 @@
     <input type="text" id="datepicker2" name="end_date" class="border-0 bg-[#f9fafb]" value="{{ request.args.get('end_date', '') }}" style="width: 90px; margin: 0; padding: 0; text-align: center;" placeholder="종료일" autocomplete="off">
   </div>
   <div class="d-flex btn dt-auth-btn rounded-md border-sky-700 hover:border-sky-700" id="search-box" style="height: 35px; padding: 0; margin: 0;">
-    <input type="search" class="dt-auth-input px-3 py-2 border-none rounded-md focus:ring-0 focus:border-none hover:" id="search" name="label" value="{{ request.args.get('label', '') }}" placeholder="검색" style="width: 200px; margin: 0; padding: 0;" />
+    <input type="search" class="dt-auth-input px-3 py-2 border-none rounded-md focus:ring-0 focus:border-none" id="search" name="label" value="{{ request.args.get('label', '') }}" placeholder="검색" style="width: 200px; margin: 0; padding: 0;" />
     <div id="search-button-box">
       <button id="search-button" class="btn dt-auth-btn bg-[#f9fafb] text-[#0569a1] py-2" type="submit" style="height: 35px; margin: 0;">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
@@ -57,10 +57,10 @@
           </p>
 
 
-          <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" role="switch" value="" id="blurToggle{{ loop.index }}">
+          <div class="form-check focus:ring-0 focus:border-none">
+            <input class="form-check-input focus:ring-[#0568a196] bg-[#f9fafb]" type="checkbox" role="switch" value="" id="blurToggle{{ loop.index }}">
             <label class="form-check-label" for="blurToggle{{ loop.index }}">
-              인물 흐림 효과
+              인물 흐림
             </label>
           </div>
 

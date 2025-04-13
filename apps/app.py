@@ -8,11 +8,8 @@ import logging
 import os
 from apps.config import config
 
-
 log = logging.getLogger("werkzeug")
 log.disabled = True
-
-
 
 # Flask 확장 초기화
 db = SQLAlchemy()
@@ -38,11 +35,9 @@ def create_app(config_key):
     app.config['MAIL_SERVER'] = 'smtp.gmail.com'
     app.config['MAIL_PORT'] = 587
     app.config['MAIL_USE_TLS'] = True
-    app.config['MAIL_USERNAME'] = os.getenv("MAIL")         # 보내는 이메일
+    app.config['MAIL_USERNAME'] = os.getenv("MAIL_USERNAME")         # 보내는 이메일
     app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')            # Gmail 앱 비밀번호
     app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
-    app.config['MAIL_DEFAULT_CHARSET'] = 'utf-8'
-    app.config['MAIL_ASCII_SENDER'] = False
 
 
 
