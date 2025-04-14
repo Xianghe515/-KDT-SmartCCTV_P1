@@ -39,7 +39,7 @@
     
                 <div class="form-floating">
                     <input type="text" class="form-control dt-auth-input {% if form.phone_number.errors %}is-invalid{% elif form.phone_number.data %}is-valid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
-                           id="phone_number" name="phone_number" value="{{ current_user.phone_number if current_user.phone_number is not none }}" placeholder="000-0000-0000">
+                           id="phone_number" name="phone_number" value="{{ current_user.phone_number if current_user.phone_number is not none }}" placeholder="">
                     <label for="phone_number">전화번호 <span style="color: red;">*</span></label>
                     {% if form.phone_number.errors %}
                         <div class="invalid-feedback">
@@ -53,7 +53,7 @@
     
                 <div class="form-floating">
                     <input type="text" class="form-control dt-auth-input {% if form.birth_date.errors %}is-invalid{% elif form.birth_date.data %}is-valid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
-                           id="birth_date" name="birth_date" value="{{ current_user.birth_date if current_user.birth_date is not none }}" placeholder="YYYY-MM-DD">
+                           id="birth_date" name="birth_date" value="{{ current_user.birth_date if current_user.birth_date is not none }}" placeholder="">
                     <label for="birth_date">생년월일</label>
                     {% if form.birth_date.errors %}
                         <div class="invalid-feedback">

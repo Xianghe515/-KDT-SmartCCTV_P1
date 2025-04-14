@@ -18,8 +18,8 @@
   {{ form.csrf_token}}
 
   <div class="form-floating">
-    <input type="password" class="form-custom form-control dt-auth-input {% if form.current_password.errors %}is-invalid{% elif form.current_password.data %}is-valid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
-           id="floatingCurrentPassword" name="current_password" value="{{ form.current_password.data or ''}}" placeholder="">
+    <input type="password" class="form-custom form-control dt-auth-input {% if form.current_password.errors %}is-invalid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
+           id="floatingCurrentPassword" name="current_password" placeholder="">
     <label for="floatingCurrentPassword">현재 비밀번호 <span style="color: red;">*</span></label>
     {% if form.current_password.errors %}
         <div class="invalid-feedback">
@@ -29,8 +29,8 @@
 </div>
 
   <div class="form-floating">
-    <input type="password" class="form-custom form-control dt-auth-input {% if form.new_password.errors %}is-invalid{% elif form.new_password.data %}is-valid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
-           id="floatingNewPassword" name="new_password" value="{{ form.new_password.data or ''}}" placeholder="">
+    <input type="password" class="form-custom form-control dt-auth-input {% if form.new_password.errors %}is-invalid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
+           id="floatingNewPassword" name="new_password" placeholder="">
     <label for="floatingNewPassword">새 비밀번호 <span style="color: red;">*</span></label>
     {% if form.new_password.errors %}
         <div class="invalid-feedback">

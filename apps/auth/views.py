@@ -1,4 +1,4 @@
-from flask import Blueprint, flash, redirect, render_template, request, url_for, current_app
+from flask import Blueprint, flash, redirect, render_template, request, url_for, current_app, session
 from flask_login import login_required, current_user, login_user, logout_user   # type: ignore
 from werkzeug.security import generate_password_hash, check_password_hash
 from email.header import Header
@@ -7,14 +7,16 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
 from datetime import datetime
+import random
 import mimetypes
 import os
 import re
 import uuid
 import smtplib
+import time
 from apps.app import db
 from apps.auth.forms import SupportForm
-from apps.auth.forms import LoginForm, SignUpForm, UpdateForm, PasswordForm, DeviceForm, SingleDeviceForm, SupportForm
+from apps.auth.forms import LoginForm, SignUpForm, UpdateForm, PasswordForm, DeviceForm, SingleDeviceForm, SupportForm, FindIDForm, FindPasswordForm, VerifyCodeForm
 from apps.auth.models import User, Camera
 from apps.utils.EmailService import EmailService
 from kakaotalk.auth.kakao_api import KakaoAPI
@@ -87,7 +89,7 @@ def login():
             # 로그인 실패 메시지 설정
             flash("메일 주소 또는 비밀번호가 일치하지 않습니다.")
             
-      return render_template("auth/login.html", form=form, active_page='login')
+      return render_template("auth/login.html", form=LoginForm(), form_find_id = FindIDForm(), form_pw=FindPasswordForm(), form_verify_code=VerifyCodeForm(), active_page='login')
 
 @auth.route("/<user_id>")
 @login_required
@@ -244,8 +246,8 @@ def logout():
             unlink_result = kakao_api.kakao_logout(access_token)  # kakao_api의 연결 해제 함수 사용
             print(f"카카오 연결 해제 결과: {unlink_result}")
             if unlink_result.get('id') == user.kakao_user_id:
+                # user.social_platform = None  # 소셜 플랫폼 정보 삭제
                 user.kakao_access_token = None  # Access Token 삭제
-                user.social_platform = None  # 소셜 플랫폼 정보 삭제
                 user.kakao_user_id = None # 카카오 User ID 삭제
                 db.session.commit()
                 logout_user()
@@ -287,7 +289,7 @@ def kakao_callback():
                         # 기존 카카오 계정으로 가입된 사용자
                         login_user(user, remember=False)  # 자동 로그인 방지
                         user.kakao_user_id=kakao_id,
-                        user.social_platform='kakao',
+                        # user.social_platform='kakao',
                         user.kakao_access_token=access_token
                         db.session.commit()
                         return redirect(url_for("streaming.home"))
@@ -305,7 +307,8 @@ def kakao_callback():
                         db.session.add(new_user)
                         db.session.commit()
                         login_user(new_user, remember=False)  # 자동 로그인 방지
-                        return redirect(url_for("streaming.home"))
+                        flash("전화번호는 필수입니다.", "danger")
+                        return redirect(url_for("auth.update", user_id=current_user.id))
                 else:
                     flash("카카오 로그인 실패: 사용자 정보를 가져오지 못했습니다.", "danger")
                     return redirect(url_for("auth.login"))
@@ -393,3 +396,99 @@ def support():
             flash("입력 내용을 다시 확인해 주세요.", "danger")
 
     return render_template("auth/support.html", form=form, active_page='support', user=user)
+
+@auth.route("/find_id", methods=["GET", "POST"])
+def find_id():
+    form_find_id = FindIDForm()
+    masked_email = None
+    not_found = False
+
+    if form_find_id.validate_on_submit():
+        search_user_name = form_find_id.user_name.data
+        search_phone_number = form_find_id.phone_number.data
+
+        user = User.query.filter_by(user_name=search_user_name, phone_number=search_phone_number).first()
+
+        if user:
+            email = user.email
+            at_index = email.find('@')
+            prefix = email[:2]
+            suffix = email[at_index - 2:]
+            middle = "*" * (len(email) - len(prefix) - len(suffix))
+            masked_email = prefix + middle + suffix
+        else:
+            not_found = True
+
+        # 모달 열도록 지시
+        session['open_modal'] = 'findIdModal'
+
+    return render_template("auth/login.html", form=LoginForm(), form_find_id=FindIDForm(), form_pw=FindPasswordForm(), form_verify_code=VerifyCodeForm(), masked_email=masked_email, not_found=not_found)
+
+@auth.route("/find_password", methods=["GET", "POST"])
+def find_password():
+    form_pw = FindPasswordForm()
+
+    if form_pw.validate_on_submit():
+        search_user_name = form_pw.user_name.data
+        search_phone_number = form_pw.phone_number.data
+        search_email = form_pw.email.data
+
+        user = User.query.filter_by(email=search_email, user_name=search_user_name, phone_number=search_phone_number).first()
+
+        if not user:
+            flash("입력하신 정보와 일치하는 사용자를 찾을 수 없습니다.", "danger")
+            return redirect(url_for("auth.login"))
+        else:
+            session['process_type'] = 'reset_password'
+            verification_code = str(random.randint(100000, 999999))
+            session['reset_password_code'] = verification_code
+            session['reset_password_user_id'] = user.id
+            session['reset_password_code_sent_at'] = time.time()
+
+            sender_email = current_app.config['MAIL_USERNAME']
+            sender_password = current_app.config['MAIL_PASSWORD']
+            email_service = EmailService(sender_email, sender_password)
+            try:
+                subject_text = "[Knockx2] 비밀번호 재설정 인증번호"
+                body_text = f"""
+비밀번호 재설정을 위한 인증번호는
+{verification_code}
+입니다.
+5분 이내에 인증을 완료해주세요.
+                                """.strip()
+
+                email_service.send_email(search_email, subject_text, body_text)
+                flash(f'{user.email}로 인증번호를 발송했습니다.', 'info')
+                return redirect(url_for("auth.login"))
+            except Exception as e:
+                flash(f'이메일 발송에 실패했습니다: {e}', 'error')
+    return render_template("auth/login.html", form=LoginForm(), form_find_id=FindIDForm(), form_pw=form_pw, form_verify_code=VerifyCodeForm())
+
+# 인증번호 확인 폼 표시
+@auth.route('/verify_code', methods=['GET'])
+def verify_code_form():
+    form_verify_code = VerifyCodeForm()
+    session['open_modal'] = 'verifyCodeModal'
+    return render_template('auth/verify_code.html', form=LoginForm(), form_find_id=FindIDForm(), form_pw=FindPasswordForm(), form_verify_code=form_verify_code, process_type=session.get('process_type'))
+
+# 인증번호 확인 처리
+@auth.route('/verify_code', methods=['POST'])
+def verify_code():
+    form_verify_code = VerifyCodeForm(request.form)
+    process_type = session.get('process_type')
+
+    if form_verify_code.validate_on_submit():
+        entered_code = form_verify_code.code.data
+        stored_code = session.get('reset_password_code')
+        stored_user_id = session.get('reset_password_user_id')
+        sent_time = session.get('reset_password_code_sent_at')
+
+        if (entered_code == stored_code and stored_user_id and sent_time and
+                (time.time() - sent_time < 300)):  # 5분 이내
+
+            session['reset_password_token'] = str(random.randint(10000000, 99999999))
+            return redirect(url_for('auth.modify_pw'))
+        else:
+            flash('인증번호가 일치하지 않거나 유효 시간이 만료되었습니다.', 'danger')
+
+    return render_template('auth/verify_code.html', form=LoginForm(), form_find_id=FindIDForm(), form_pw=FindPasswordForm(), form_verify_code=form_verify_code, process_type=process_type)
