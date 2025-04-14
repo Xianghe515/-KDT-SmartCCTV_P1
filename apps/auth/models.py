@@ -28,7 +28,7 @@ class User(db.Model, UserMixin):
         return f"<User {self.id}>"
     
     # 비밀번호를 설정하기 위한 프로퍼티
-    @property
+    @property 
     def password(self):
         raise AttributeError("읽어 들일 수 없음")
 

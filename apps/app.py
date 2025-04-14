@@ -53,8 +53,10 @@ def create_app(config_key):
 
     def send_kakao_message(message):
         kakao_token = app.config.get('KAKAO_ACCESS_TOKEN')
+        print(f"Loaded Token: {kakao_token}")  # 1. 토큰 로드 확인
+
         if not kakao_token:
-            print("카카오 Access Token이 설정되지 않았습니다.")
+            print("카카오 Access Token이 설정되지 않았습니다.")  # 2. 토큰 없음 확인
             return False
 
         headers = {
@@ -62,31 +64,25 @@ def create_app(config_key):
             'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
         }
         data = {
-            # 'template_id': 12345, # 실제 템플릿 ID로 변경 (또는 text 사용)
-            # 'template_args': {
-            #     'message': message
-            # }
-            # 텍스트 메시지 전송
             'object_type': 'text',
             'text': message,
-            # 필요하다면 링크 추가
-            # 'link': {
-            #     'web_url': 'http://your-app.com/',
-            #     'mobile_web_url': 'http://your-app.com/'
-            # }
         }
-        # url = 'https://kapi.kakao.com/v2/api/talk/memo/send' # 메시지 템플릿 API
-        url = 'https://kapi.kakao.com/v2/api/talk/memo/default/send' # 텍스트 메시지 API
+        url = 'https://kapi.kakao.com/v2/api/talk/memo/default/send'
 
         try:
+            print(f"카카오톡 메시지 전송 시도 (URL: {url}, Data: {data})")  # 3. API 호출 시도 로그
             response = requests.post(url, headers=headers, data=data)
-            response.raise_for_status() # 실패 시 HTTPError 발생
-            print("카카오톡 메시지 전송 성공:", response.json())
+            print(f"카카오톡 API 응답 상태 코드: {response.status_code}")  # 4. 응답 상태 코드 확인
+            response.raise_for_status()
+            print("카카오톡 메시지 전송 성공:", response.json())  # 5. 성공 응답 확인
             return True
         except requests.exceptions.RequestException as e:
-            print("카카오톡 메시지 전송 실패:", e)
+            print(f"카카오톡 메시지 전송 실패 (RequestException): {e}")  # 6. RequestException 발생
             if response is not None:
-                print("응답 내용:", response.text)
+                print("응답 내용:", response.text)  # 7. 응답 내용 확인
+            return False
+        except Exception as e:
+            print(f"카카오톡 메시지 전송 실패 (Unexpected Error): {e}")  # 8. 예상치 못한 오류 발생
             return False
 
     app.send_kakao_message = send_kakao_message

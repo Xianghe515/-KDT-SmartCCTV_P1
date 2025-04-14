@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, Response, jsonify, render_template, request, send_file, flash, redirect, url_for, current_app
+from flask import Flask, Blueprint, Response, jsonify, render_template, request, send_file, flash, redirect, url_for, current_app, stream_with_context
 from flask_login import current_user, login_required
 import cv2 as cv
 from ultralytics import YOLO
@@ -128,6 +128,9 @@ def yolo_video(camera_id):
 
             height= 480
             width= 640
+            # height, width = frame.shape[:2]
+            height = 480
+            width = 640
             video_writer = cv.VideoWriter(recorded_filename, fourcc, 20.0, (width, height))
             print(f"녹화 시작: {recorded_filename}")
 
@@ -238,6 +241,7 @@ def yolo_video(camera_id):
                     print("카카오톡 알림 전송 시도 (성공)")
                 else:
                     print("카카오톡 알림 전송 시도 (실패)")
+#---------------------------메시지 전송 코드---------------------------------------
 
                 
             else:
@@ -248,7 +252,7 @@ def yolo_video(camera_id):
             print("다음 인터벌로 이동...\n")
 
 
-    response = Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    response = Response(stream_with_context(generate_frames()), mimetype='multipart/x-mixed-replace; boundary=frame')
     return response
 
 
