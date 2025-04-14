@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, Response, jsonify, render_template, request, send_file, flash, redirect, url_for, current_app
+from flask import Flask, Blueprint, Response, jsonify, render_template, request, send_file, flash, redirect, url_for, current_app, stream_with_context
 from flask_login import current_user, login_required
 import cv2 as cv
 from ultralytics import YOLO
@@ -8,9 +8,8 @@ import datetime
 import os
 import time
 import re
-
+import requests
 from datetime import datetime
-from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy import create_engine
 from flask_wtf.csrf import validate_csrf
 from apps.auth.forms import DeleteForm
@@ -18,7 +17,8 @@ from apps.auth.models import Camera, Log, Video
 from apps.app import db
 from apps.utils.VideoStream import VideoStream
 from apps.utils.Blur import Blur
-from apps.utils.EmailService import EmailService, send_alert_without_app_context
+from apps.utils.EmailService import EmailService
+from apps.utils.Kakao_alert import Kakao_alert
 
 
 # dll을 못 불러오는 오류 발생         *dll - C언어 동적 라이브러리
@@ -37,9 +37,11 @@ streaming = Blueprint(
 VIDEO_STORAGE_PATH = "./apps/server/static/videos"  # 저장할 비디오 폴더 경로
 BLURRED_SAVE_PATH = "D:\\kim\\Yolo11\\apps\\server\\static\\blurred"
 
-engine = create_engine('mysql+pymysql://knockx2:knockx2@localhost/knockx2')
-Session = scoped_session(sessionmaker(bind=engine))
-session = Session()
+"""앱 컨텍스트 유지 못하는 문제 stream_with_context로 해결함 -> session 명시할 필요 없어졌음"""
+# from sqlalchemy.orm import scoped_session, sessionmaker
+# engine = create_engine('mysql+pymysql://knockx2:knockx2@localhost/knockx2')
+# Session = scoped_session(sessionmaker(bind=engine))
+# session = Session()
 
 @streaming.route("/index")
 def index():
@@ -79,177 +81,14 @@ def video(camera_id):
 
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-
-# @streaming.route("/yolo_video/<camera_id>")
-# @login_required
-# def yolo_video(camera_id):
-#     user_id = current_user.id
-#     user_name = current_user.user_name
-#     cam = Camera.query.filter_by(user_id=user_id, camera_id=camera_id).first()
-#     if not cam:
-#         return "등록된 기기가 없습니다."
-
-#     ip_address = cam.ip_address
-#     stream_url = f"http://{ip_address}:8000/"
-
-#     # YOLO 모델 초기화
-#     try:
-#         ncnn_model = YOLO(".\\yolo11\\yolo11n_ncnn_model")
-#         print("YOLO 모델 로드 성공")
-#     except Exception as e:
-#         print(f"YOLO 모델 로드 실패: {str(e)}")
-#         return f"모델 로드 실패: {str(e)}"
-
-#     colors = np.random.uniform(0, 255, size=(len(ncnn_model.names), 3))
-#     stream = VideoStream(stream_url)
-#     fourcc = cv.VideoWriter_fourcc(*'avc1')
-
-#     target_class_indices = [0]
-#     detection_interval = 30  # 인터벌 시간 (초)
-
-#     if not os.path.exists(VIDEO_STORAGE_PATH):
-#         os.makedirs(VIDEO_STORAGE_PATH)
-
-#     def generate_frames():
-#         print("프레임 생성 시작 (YOLO 반복 인터벌)")
-#         while True:
-#             interval_start_time = time.time()
-#             interval_has_detection = False
-#             detection_start_time = None
-#             detection_active = False
-#             detection_end_time = None
-#             is_recording = True
-
-#             now = datetime.now()
-#             filename = f"{user_name}_{camera_id}_{now.strftime('%Y%m%d_%H%M%S')}.mp4"
-#             recorded_filename = os.path.join(VIDEO_STORAGE_PATH, filename)
-#             video_writer = None
-
-#             frame = stream.get_frame()
-
-#             # height, width = frame.shape[:2]
-#             # frame.shape 못 읽어 오는 오류 발생
-#             height = 480
-#             width = 640
-#             video_writer = cv.VideoWriter(recorded_filename, fourcc, 20.0, (width, height))
-#             print(f"녹화 시작: {recorded_filename}")
-
-#             while True:
-#                 frame = stream.get_frame()
-#                 if frame is None:
-#                     continue
-
-#                 img = frame.copy()
-#                 results = ncnn_model(img)
-
-#                 now = datetime.now()
-#                 current_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
-#                 cv.putText(img, current_time_str, (img.shape[1] - 280, img.shape[0] - 20),
-#                         cv.FONT_HERSHEY_DUPLEX, 0.7, (83, 115, 219), 2)
-
-#                 detected_this_frame = False
-
-#                 for result in results:
-#                     for box in result.boxes:
-#                         x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
-#                         conf = box.conf[0].item()
-#                         cls = box.cls[0].item()
-#                         class_index = int(cls)
-
-#                         if class_index in target_class_indices and conf >= 0.4:
-#                             detected_this_frame = True
-#                             color = colors[class_index]
-#                             cv.rectangle(img, (int(x1), int(y1)), (int(x2), int(y2)), color, 3)
-#                             cv.putText(img, f"{ncnn_model.names[class_index]} {conf:.2f}",
-#                                     (int(x1), int(y1) - 10), cv.FONT_HERSHEY_SIMPLEX, 0.8, color, 3)
-
-#                 # 감지 상태 처리
-#                 if detected_this_frame:
-#                     if not detection_active:
-#                         print("🔵 감지됨")
-#                         detection_active = True
-#                         detection_start_time = time.time()
-#                         detected_names = [ncnn_model.names[int(res.boxes.cls[0].item())] for res in results if res.boxes and int(res.boxes.cls[0].item()) in target_class_indices]
-#                     else:
-#                         print("🟢 감지 유지")
-#                         if time.time() - detection_start_time >= 10:
-#                             interval_has_detection = True
-#                             detection_end_time = None  # 감지 유지 중이므로 감지 해제 타이머 초기화
-#                 else:
-#                     if detection_active:
-#                         if detection_end_time is None:
-#                             print("🟡 감지 해제됨 (대기)")
-#                             detection_end_time = time.time()
-#                         elif time.time() - detection_end_time >= 10:
-#                             # 감지가 해제되고 10초 이상 지났으면 종료
-#                             detection_duration = detection_end_time - detection_start_time
-#                             if detection_duration < 10:
-#                                 print("🔴 감지 지속 시간이 10초 미만 → 영상 삭제 및 인터벌 종료")
-#                                 interval_has_detection = False
-#                             else:
-#                                 print("⚪ 감지 종료 후 10초 경과 → 인터벌 종료")
-#                             break
-#                     else:
-#                         print("⚫ 감지 없음")
-#                         if time.time() - interval_start_time >= detection_interval:
-#                             print("⏹️ 감지 없음 + 인터벌 종료")
-#                             break
-
-#                 if not detection_active and time.time() - interval_start_time >= detection_interval:
-#                     print("⏹️ 감지 없음 + 인터벌 종료")
-#                     break
-
-#                 if is_recording and video_writer:
-#                     video_writer.write(img)
-
-#                 _, buffer = cv.imencode('.jpg', img)
-#                 frame_bytes = buffer.tobytes()
-#                 yield (b'--frame\r\n'
-#                     b'Content-Type:image/jpeg\r\n'
-#                     b'Content-Length: ' + f"{len(frame_bytes)}".encode() + b'\r\n'
-#                     b'\r\n' + frame_bytes + b'\r\n')
-
-
-#             # 녹화 종료 후 파일 처리
-#             if video_writer:
-#                 video_writer.release()
-
-#             if interval_has_detection:
-#                 print("저장 조건 충족 → DB 저장")
-#                 created_at = datetime.fromtimestamp(interval_start_time)
-#                 end_time = datetime.now()
-#                 duration = (end_time - created_at).total_seconds()
-
-#                 new_video = Video(
-#                     user_id=user_id,
-#                     camera_id=camera_id,
-#                     filename=os.path.basename(recorded_filename),
-#                     created_at=created_at,
-#                     end_time=end_time,
-#                     duration=duration,
-#                     detected_objects=", ".join(set(detected_names)),
-#                 )
-#                 session.add(new_video)
-#                 session.commit()
-
-                
-#             else:
-#                 print("감지 없음 → 영상 삭제")
-#                 if os.path.exists(recorded_filename):
-#                     os.remove(recorded_filename)
-
-#             print("다음 인터벌로 이동...\n")
-
-
-#     response = Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
-#     return response
-
 @streaming.route("/yolo_video/<camera_id>")
 @login_required
 def yolo_video(camera_id):
     user_id = current_user.id
     user_name = current_user.user_name
     email = current_user.email
+    social_platform = current_user.social_platform
+    
     cam = Camera.query.filter_by(user_id=user_id, camera_id=camera_id).first()
     if not cam:
         return "등록된 기기가 없습니다."
@@ -264,6 +103,15 @@ def yolo_video(camera_id):
     except Exception as e:
         print(f"YOLO 모델 로드 실패: {str(e)}")
         return f"모델 로드 실패: {str(e)}"
+
+    # Initialize EmailService here
+    sender_email = current_app.config.get('MAIL_USERNAME')
+    sender_password = current_app.config.get('MAIL_PASSWORD')
+    email_service = None
+    if sender_email and sender_password:
+        email_service = EmailService(sender_email, sender_password)
+    else:
+        print("⚠️ 메일 설정 (MAIL_USERNAME, MAIL_PASSWORD)이 구성되지 않았습니다.")
 
     colors = np.random.uniform(0, 255, size=(len(ncnn_model.names), 3))
     stream = VideoStream(stream_url)
@@ -292,12 +140,15 @@ def yolo_video(camera_id):
 
             frame = stream.get_frame()
 
-            # height, width = frame.shape[:2]
-            # frame.shape 못 읽어 오는 오류 발생
-            height = 480
+            height = 480  # Default values if frame shape is not available
             width = 640
+            if frame is not None and frame.shape:
+                height, width = frame.shape[:2]
+
             video_writer = cv.VideoWriter(recorded_filename, fourcc, 20.0, (width, height))
             print(f"녹화 시작: {recorded_filename}")
+
+            detected_names = []
 
             while True:
                 frame = stream.get_frame()
@@ -313,6 +164,7 @@ def yolo_video(camera_id):
                         cv.FONT_HERSHEY_DUPLEX, 0.7, (83, 115, 219), 2)
 
                 detected_this_frame = False
+                frame_detected_names = set()
 
                 for result in results:
                     for box in result.boxes:
@@ -323,10 +175,13 @@ def yolo_video(camera_id):
 
                         if class_index in target_class_indices and conf >= 0.4:
                             detected_this_frame = True
+                            frame_detected_names.add(ncnn_model.names[class_index])
                             color = colors[class_index]
                             cv.rectangle(img, (int(x1), int(y1)), (int(x2), int(y2)), color, 3)
                             cv.putText(img, f"{ncnn_model.names[class_index]} {conf:.2f}",
                                     (int(x1), int(y1) - 10), cv.FONT_HERSHEY_SIMPLEX, 0.8, color, 3)
+
+                detected_names.extend(list(frame_detected_names))
 
                 # 감지 상태 처리
                 if detected_this_frame:
@@ -334,7 +189,6 @@ def yolo_video(camera_id):
                         print("🔵 감지됨")
                         detection_active = True
                         detection_start_time = time.time()
-                        detected_names = [ncnn_model.names[int(res.boxes.cls[0].item())] for res in results if res.boxes and int(res.boxes.cls[0].item()) in target_class_indices]
                     else:
                         print("🟢 감지 유지")
                         if time.time() - detection_start_time >= 10:
@@ -394,23 +248,38 @@ def yolo_video(camera_id):
                     duration=duration,
                     detected_objects=", ".join(set(detected_names)),
                 )
-                session.add(new_video)
-                session.commit()
+                db.session.add(new_video)
+                db.session.commit()
 
-                subject_text = "[Knockx2] 객체 감지 알림"
-                body_text = f"""
+                # 카카오 메시지 전송
+                if social_platform == 'kakao':
+                    video_title = "배회자 감지"  # 실제 감지 제목 또는 원하는 메시지
+                    save_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+                    message = f"[knockx2] {save_time}에 {video_title} 되었습니다!"
+                    kakao_token = current_user.kakao_access_token
+                    Kakao_alert.send_kakao_message(message, kakao_token)
+
+                # 카카오 유저 아닌 경우 이메일 전송
+                else:
+                    if email_service:
+                        subject_text = "[Knockx2] 객체 감지 알림"
+                        body_text = f"""
 사용자: {user_name}
 카메라 ID: {camera_id}
 감지 시간: {created_at.strftime('%Y-%m-%d %H:%M:%S')}
 감지 객체: {", ".join(set(detected_names))}
-                """.strip()
+                        """.strip()
 
-                try:
-                    # EmailService.send_alert(email, subject_text, body_text)
-                    send_alert_without_app_context(email, subject_text, body_text)
-                    print("이메일 알림 전송")
-                except Exception as e:
-                    print(f"이메일 전송 실패: {e}")
+                        try:
+                            success = email_service.send_email(email, subject_text, body_text)
+                            if success:
+                                print("이메일 알림 전송 성공")
+                            else:
+                                print("이메일 알림 전송 실패")
+                        except Exception as e:
+                            print(f"이메일 전송 실패: {e}")
+                    else:
+                        print("⚠️ EmailService가 초기화되지 않아 이메일 알림을 보낼 수 없습니다.")
 
             else:
                 print("감지 없음 → 영상 삭제")
@@ -419,10 +288,8 @@ def yolo_video(camera_id):
 
             print("다음 인터벌로 이동...\n")
 
-
-    response = Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    response = Response(stream_with_context(generate_frames()), mimetype='multipart/x-mixed-replace; boundary=frame')
     return response
-
 
 
 @streaming.route("/live/<camera_id>")
@@ -663,3 +530,6 @@ def upload_video():
         return jsonify({"message": "영상 저장 완료 및 카카오톡 알림 전송 시도"})
     else:
         return jsonify({"message": "영상 저장 완료, 카카오톡 알림 전송 실패"})
+
+
+

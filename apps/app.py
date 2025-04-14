@@ -6,6 +6,7 @@ from flask_wtf.csrf import CSRFProtect  # type:ignore
 from flask_mail import Mail
 import logging
 import os
+import json
 from apps.config import config
 
 log = logging.getLogger("werkzeug")
@@ -60,3 +61,4 @@ def create_app(config_key):
 
     
     return app
+
