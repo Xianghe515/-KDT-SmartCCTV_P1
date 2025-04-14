@@ -390,15 +390,15 @@ input[type="date"] {
 }
 
 /* 스위치 예쁘게 다듬기 */
-.form-check-input:checked {
-    background-color: #6366f1 !important; /* 보라빛 파랑 (Tailwind 느낌) */
-    border-color: #6366f1 !important;
+ .form-check-input:checked {
+    background-color: #0569a1 !important; 
+    border-color: #0569a1 !important;
   }
-  
+  /*
   .form-check-input {
     width: 3rem  !important;
     height: 1.5rem  !important;
-    background-color: #d1d5db  !important; /* 연회색 */
+    background-color: #d1d5db  !important;
     border-radius: 1rem  !important;
     border: none  !important;
     transition: background-color 0.3s, box-shadow 0.3s  !important;
@@ -416,7 +416,7 @@ input[type="date"] {
     height: 1.2rem !important;
     background-color: #fff;
     border-radius: 50%;
-    top: 0.15rem;
+    top: 0.4rem;
     left: 0.15rem;
     transition: transform 0.3s ease;
     box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
@@ -424,4 +424,35 @@ input[type="date"] {
   
   .form-check {
     position: relative;
+  } */
+
+
+  .file-upload-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid #d1d5db; /* gray-300 */
+    border-radius: 0.375rem; /* rounded-md */
+    overflow: hidden;
+    margin-top: 10px;
+    height: 30px;
+  }
+
+  .file-upload-label {
+    background-color: #bad4e3;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .file-upload-input {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    outline: none;
+    height: auto;
+    width: 0;
+    margin: 0 5px 0 5px;
+  }
+  .file-upload-input::-webkit-file-upload-button {
+    display: none; /* 기본 버튼 숨김 */
   }

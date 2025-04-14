@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm  # type:ignore
-from wtforms import PasswordField, StringField, SubmitField, FieldList, FormField, HiddenField  # type:ignore
+from wtforms import PasswordField, StringField, SubmitField, FieldList, FormField, HiddenField, FileField, TextAreaField  # type:ignore
 from wtforms.validators import DataRequired, Email, Length  # type:ignore
 from wtforms.validators import Regexp, Optional, ValidationError
 
@@ -157,11 +157,18 @@ class SupportForm(FlaskForm):
                   Email("메일 주소의 형식으로 입력해주세요."),
             ],
       )
-      text = StringField(
+      title = StringField(
+            "제목",
+            validators=[
+                  DataRequired("제목은 필수입니다."),
+                  Length(2, 30, "2문자 이상, 30문자 이내로 입력해주세요."),
+            ],
+      )
+      text = TextAreaField(
            "문의 내용",
            validators=[
                   DataRequired("문의 내용을 입력해주세요."),
-                  Length(10, 500, "10문자 이상, 500문자 이내로 입력해주세요."),
+                  Length(10, 1000, "10문자 이상, 500문자 이내로 입력해주세요."),
            ]
       )
-      submit = SubmitField('제출')
+      file = FileField("첨부파일")  # 선택 사항

@@ -1,11 +1,22 @@
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for, current_app
 from flask_login import login_required, current_user, login_user, logout_user   # type: ignore
-from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from email.header import Header
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+from datetime import datetime
+import mimetypes
+import os
+import re
+import uuid
+import smtplib
 from apps.app import db
+from apps.auth.forms import SupportForm
 from apps.auth.forms import LoginForm, SignUpForm, UpdateForm, PasswordForm, DeviceForm, SingleDeviceForm, SupportForm
 from apps.auth.models import User, Camera
+from apps.utils.EmailService import EmailService
 from kakaotalk.auth.kakao_api import KakaoAPI
 
 auth = Blueprint(
@@ -273,9 +284,6 @@ def kakao_callback():
                 if kakao_id:
                     user = User.query.filter_by(email=kakao_email).first()
                     if user:
-                        print("@"*80)
-                        print("로그인 성공")
-                        print("@"*80)
                         # 기존 카카오 계정으로 가입된 사용자
                         login_user(user, remember=False)  # 자동 로그인 방지
                         user.kakao_user_id=kakao_id,
@@ -284,9 +292,6 @@ def kakao_callback():
                         db.session.commit()
                         return redirect(url_for("streaming.home"))
                     else:                        
-                        print("@"*80)
-                        print("로그인 실패")
-                        print("@"*80)
                         # 새로운 카카오 계정 사용자: 회원가입 처리
                         new_user = User(
                             kakao_user_id=kakao_id,  # 카카오 고유 ID 저장
@@ -314,9 +319,77 @@ def kakao_callback():
         flash("카카오 로그인 실패: 인가 코드 없음", "danger")
         return redirect(url_for("auth.login"))
 
-# 고객지원 엔드포인트
-@auth.route("/support")
+# 파일명에 ASCII 외의 문자가 포함될 경우 gmail은 noname으로라도 파일이 첨부되지만, 네이버는 .txt 파일로 깨져서 넘어감
+def to_ascii_filename(filename):
+    """파일명에서 ASCII 문자 외의 문자를 제거하거나 변환합니다."""
+    return re.sub(r'[^\x00-\x7F]+', '_', filename)
+
+@auth.route("/support", methods=["GET", "POST"])
 def support():
+    """
+    .env 파일에서 설정해주세요.
+    MAIL_USERNAME=보내는 이메일@gmail.com
+    MAIL_PASSWORD="구글 2차 앱 비밀번호"
+    MAIL_DEFAULT_SENDER=Knockx2 고객지원
+    """
+    sender_email = current_app.config['MAIL_USERNAME']
+    sender_password = current_app.config['MAIL_PASSWORD']
+    email_service = EmailService(sender_email, sender_password) # EmailService 인스턴스 생성
     form = SupportForm()
     user = current_user
+
+    if request.method == "POST":
+        if form.validate_on_submit():
+            title = form.title.data
+            email = user.email if user.is_authenticated else form.email.data
+            text = form.text.data
+
+            uploaded_file = request.files.get("file")
+            original_filename = uploaded_file.filename if uploaded_file else None
+
+            ascii_filename = None
+            if original_filename:
+                ascii_filename = to_ascii_filename(original_filename)
+
+            if uploaded_file and uploaded_file.filename:
+                upload_dir = os.path.join(os.getcwd(), "./uploads")
+                os.makedirs(upload_dir, exist_ok=True)
+
+                ext = os.path.splitext(uploaded_file.filename)[1]
+                filename = f"{uuid.uuid4()}{ext}"
+                save_path = os.path.join(upload_dir, filename)
+                uploaded_file.save(save_path)
+            else:
+                save_path = None
+
+            subject_text = f"[문의 접수 완료] {title}"
+            body_text = f"""문의 제목: {title}
+이메일: {email}
+내용:
+{text}
+
+첨부파일 : {ascii_filename if ascii_filename else original_filename if original_filename else '없음'}
+
+빠른 시일 내에 답변 드리도록 하겠습니다.
+이용에 불편을 드려 죄송합니다.
+                """.strip()
+
+            try:
+                # EmailService를 사용하여 이메일 전송
+                if email_service.send_email(email, subject_text, body_text, save_path, ascii_filename if ascii_filename else original_filename):
+                    flash("문의가 접수되었으며 확인 메일을 전송했습니다.", "success")
+                else:
+                    flash("문의는 접수되었지만 이메일 전송에 실패했습니다.", "warning")
+
+            except Exception as e:
+                print(f"이메일 전송 실패: {e}")
+                flash("문의는 접수되었지만 이메일 전송에 실패했습니다.", "warning")
+
+            return redirect(url_for("auth.support"))
+
+        else:
+            print("summit 실패")
+            print("폼 에러:", form.errors)
+            flash("입력 내용을 다시 확인해 주세요.", "danger")
+
     return render_template("auth/support.html", form=form, active_page='support', user=user)
