@@ -18,6 +18,7 @@ from apps.auth.forms import LoginForm, SignUpForm, UpdateForm, PasswordForm, Dev
 from apps.auth.models import User, Camera
 from apps.utils.EmailService import EmailService
 from kakaotalk.auth.kakao_api import KakaoAPI
+from apps.auth.forms import DeleteUserForm
 
 auth = Blueprint(
       "auth",
@@ -393,3 +394,22 @@ def support():
             flash("입력 내용을 다시 확인해 주세요.", "danger")
 
     return render_template("auth/support.html", form=form, active_page='support', user=user)
+
+@auth.route('/delete_user', methods=['GET', 'POST'])
+@login_required
+def delete_user():
+    form = DeleteUserForm()
+    if form.validate_on_submit():
+        if form.confirm_delete.data:  # 동의 체크박스가 선택되었는지 확인
+            try:
+                db.session.delete(current_user)
+                db.session.commit()
+                logout_user()
+                flash('계정이 성공적으로 탈퇴되었습니다.', 'info')
+                return redirect(url_for("auth.login")) # 탈퇴 후 이동할 페이지
+            except Exception as e:
+                db.session.rollback()
+                flash(f'회원 탈퇴 처리 중 오류가 발생했습니다: {e}', 'error')
+        else:
+            flash('계정 탈퇴에 동의해야 합니다.', 'error')
+    return render_template('auth/delete_user.html', form=form)
