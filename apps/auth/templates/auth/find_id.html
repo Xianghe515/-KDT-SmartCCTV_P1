@@ -2,7 +2,7 @@
 {% block title %}아이디 찾기{% endblock %}
 {% block content %}
 <div class="relative flex h-[600px] bg-gray-100">
-      <div class="absolute inset-0 flex items-center justify-end pr-24">
+      <div class="absolute inset-0 flex items-center justify-center">
             <div class="w-96 p-8 bg-white rounded-lg shadow-lg">
             <h2 class="text-2xl font-bold mb-6 text-center">아이디 찾기</h2>
                   <form class="space-y-4" action="{{ url_for('auth.find_id') }}" method="post" novalidate>

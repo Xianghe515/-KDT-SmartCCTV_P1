@@ -3,9 +3,10 @@
   <div class="absolute inset-0 flex items-center justify-center">
     <div class="w-96 p-8 bg-white rounded-lg shadow-lg">
       <h2 class="text-2xl font-bold mb-6 text-center">회원 탈퇴</h2>
-      <p class="mb-4 text-gray-700">
-        정말로 계정을 탈퇴하시겠습니까? 탈퇴 후에는 모든 정보가 삭제되며 복구할
-        수 없습니다.
+      <p class="mb-4 text-gray-700 text-center">
+        정말로 탈퇴하시겠습니까?<br>
+        탈퇴 시 모든 정보가 삭제되며<br>
+        복구할 수 없습니다.
       </p>
       <section>
         <form action="{{ url_for('auth.delete_user') }}" method="POST">
@@ -17,9 +18,8 @@
             <span class="block sm:inline">{{ message }}</span>
           </div>
           {% endfor %}
-          <div class="mb-3">
-            <div class="form-check">
-              {{ form.confirm_delete(class="...", id="confirmDelete") }}
+            <div class="form-check focus:ring-0 focus:border-none" style="margin:0;">
+              {{ form.confirm_delete(class="form-check-input focus:ring-[#0568a196] bg-[#f9fafb]", style="margin-top:5px;", id="confirmDelete") }}
               <label class="..." for="confirmDelete">
                   계정 탈퇴 및 모든 정보 삭제에 동의합니다.
               </label>
@@ -27,15 +27,14 @@
             {% if form.confirm_delete.errors %}
             <div class="...">{{ form.confirm_delete.errors[0] }}</div>
             {% endif %}
-          </div>
-          <div class="flex justify-end gap-2">
+          <div class="flex justify-center gap-2" style="margin:20px 0px 0px 0px;">
             <button
               type="button"
-              class="btn bg-gray-300 text-gray-800 py-2 rounded-md hover:bg-gray-400 transition-colors"
+              class="btn bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors"
               onclick="window.history.back();"
             >취소
             </button>
-            {{ form.submit(class="btn bg-red-500 text-white py-2 rounded-md
+            {{ form.submit(class="btn bg-red-500 text-white rounded-md
             hover:bg-red-700 transition-colors") }}
           </div>
         </form>

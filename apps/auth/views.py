@@ -126,12 +126,15 @@ def modify_pw(user_id):
         flash("해당 사용자를 찾을 수 없습니다.")
         return redirect(url_for("auth.info", user_id=user_id))
 
+    if current_user.social_platform == "kakao":
+        flash("카카오톡 로그인 사용자는 비밀번호를 변경할 수 없습니다.", "danger")
+        return redirect(url_for("auth.info", user_id=user_id))
+
     # process_type이 'reset_password'인 경우 비밀번호 변경 처리
     if session.get('process_type') == 'reset_password':
         # 임시 비밀번호를 입력 필드에 자동으로 채워넣고 disabled 처리
         form.current_password.data = session.get('temp_password')  # 임시 비밀번호 할당
         form.current_password.disabled = True  # 사용자가 수정할 수 없도록 disabled 설정
-        print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@",form.current_password.data)
         if form.validate_on_submit():
             # 새 비밀번호 설정
             user.password_hash = generate_password_hash(form.new_password.data)
@@ -143,6 +146,7 @@ def modify_pw(user_id):
             return redirect(url_for("auth.login"))
 
     else:
+    
         # 기존 사용자의 비밀번호 변경
         if form.validate_on_submit():
             # 현재 비밀번호 확인
@@ -495,6 +499,11 @@ def find_password():
         if not user:
             flash("입력하신 정보와 일치하는 사용자를 찾을 수 없습니다.", "danger")
             return redirect(url_for("auth.find_password"))
+        
+        # 카카오 사용자라면 차단
+        if user.social_platform == 'kakao':
+            flash("카카오톡 로그인 사용자입니다.", "danger")
+            return redirect(url_for("auth.login"))
 
         # 인증번호 + 임시 비밀번호 생성
         verification_code = str(secrets.randbelow(900000) + 100000)
@@ -504,10 +513,10 @@ def find_password():
         session['reset_password_code'] = verification_code
         session['reset_password_user_id'] = user.id
         session['reset_password_code_sent_at'] = time.time()
-        session['temp_password'] = temp_password  # 이거 꼭 세션에 저장해둬야 함
+        session['temp_password'] = temp_password  # 임시 비밀번호
 
         # 이메일 발송
-        subject_text = "[Knockx2] 비밀번호 재설정 인증번호 및 임시 비밀번호"
+        subject_text = "[Knockx2] 비밀번호 재설정 인증번호"
         body_text = f"""
 <html>
 <body style="font-family: sans-serif; line-height: 1.6;">
