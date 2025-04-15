@@ -264,10 +264,47 @@ def yolo_video(camera_id):
                     if email_service:
                         subject_text = "[Knockx2] 객체 감지 알림"
                         body_text = f"""
-사용자: {user_name}
-카메라 ID: {camera_id}
-감지 시간: {created_at.strftime('%Y-%m-%d %H:%M:%S')}
-감지 객체: {", ".join(set(detected_names))}
+                        <html>
+                            <body style="font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 0;">
+                                <table role="presentation" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+                                    <tr>
+                                        <td style="padding-bottom: 20px; text-align: center;">
+                                            <h2 style="color: #333333; font-size: 24px;">[Knockx2] 객체 감지 알림</h2>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 10px; color: #555555;">
+                                            <strong>사용자:</strong><br>
+                                            <span style="color: #333333;">{user_name}</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 10px; color: #555555;">
+                                            <strong>카메라 ID:</strong><br>
+                                            <span style="color: #333333;">{camera_id}</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 10px; color: #555555;">
+                                            <strong>감지 시간:</strong><br>
+                                            <span style="color: #333333;">{created_at.strftime('%Y-%m-%d %H:%M:%S')}</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 20px; color: #555555;">
+                                            <strong>감지 객체:</strong><br>
+                                            <span style="color: #333333;">{', '.join(set(detected_names))}</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="text-align: center; color: #777777; font-size: 14px;">
+                                            <p>감지된 객체에 대한 알림을 드립니다.</p>
+                                            <p>추가적인 정보가 필요하시면 문의해 주세요.</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </body>
+                        </html>
                         """.strip()
 
                         try:
