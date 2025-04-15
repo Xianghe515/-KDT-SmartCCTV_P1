@@ -21,8 +21,7 @@
             <div class="form-check">
               {{ form.confirm_delete(class="...", id="confirmDelete") }}
               <label class="..." for="confirmDelete">
-                동의합니다. 계정 탈퇴에 동의하며, 모든 정보 삭제에 대한 책임을
-                확인합니다.
+                계정 탈퇴 및 모든 정보 삭제에 동의합니다.
               </label>
             </div>
             {% if form.confirm_delete.errors %}
@@ -30,12 +29,15 @@
             {% endif %}
           </div>
           <div class="flex justify-end gap-2">
-            <a
-              href="{{ url_for('auth.login') }}"
+            <button
+              type="button"
               class="btn bg-gray-300 text-gray-800 py-2 rounded-md hover:bg-gray-400 transition-colors"
-              >취소</a
+              onclick="window.history.back();"
             >
-            {{ form.submit(class="...") }}
+              취소
+            </button>
+            {{ form.submit(class="btn bg-red-500 text-white py-2 rounded-md
+            hover:bg-red-700 transition-colors") }}
           </div>
         </form>
       </section>
