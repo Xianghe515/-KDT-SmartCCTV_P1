@@ -395,18 +395,32 @@ def support():
 
     return render_template("auth/support.html", form=form, active_page='support', user=user)
 
+import requests
+
 @auth.route('/delete_user', methods=['GET', 'POST'])
 @login_required
 def delete_user():
     form = DeleteUserForm()
     if form.validate_on_submit():
-        if form.confirm_delete.data:  # 동의 체크박스가 선택되었는지 확인
+        if form.confirm_delete.data:
             try:
+                social_platform = current_user.social_platform
+                if social_platform == 'kakao':
+                    kakao_access_token = current_user.kakao_access_token
+                    unlink_url = 'https://kapi.kakao.com/v1/user/unlink'
+                    headers = {'Authorization': f'Bearer {kakao_access_token}'}
+                    response = requests.post(unlink_url, headers=headers)
+                    response.raise_for_status() # 에러 발생 시 예외 발생
+                    print(f"카카오 Unlink API 응답: {response.json()}")
+
                 db.session.delete(current_user)
                 db.session.commit()
                 logout_user()
                 flash('계정이 성공적으로 탈퇴되었습니다.', 'info')
-                return redirect(url_for("auth.login")) # 탈퇴 후 이동할 페이지
+                return redirect(url_for("auth.login"))
+            except requests.exceptions.RequestException as e:
+                db.session.rollback()
+                flash(f'소셜 계정 연결 해제 중 오류가 발생했습니다: {e}', 'error')
             except Exception as e:
                 db.session.rollback()
                 flash(f'회원 탈퇴 처리 중 오류가 발생했습니다: {e}', 'error')
