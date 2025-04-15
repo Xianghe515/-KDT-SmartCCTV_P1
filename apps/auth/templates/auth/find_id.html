@@ -1,14 +1,22 @@
 {% extends "server/base.html" %}
 {% block title %}아이디 찾기{% endblock %}
 {% block content %}
-<div class="relative flex h-[600px] bg-gray-100">
+<div class="relative flex h-[600px]">
+  <div class="bg_video">
+      <video autoplay muted loop playsinline>
+        <source src="{{ url_for('static', filename='../static/images/식물3.mp4') }}" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
       <div class="absolute inset-0 flex items-center justify-center">
             <div class="w-96 p-8 bg-white rounded-lg shadow-lg">
             <h2 class="text-2xl font-bold mb-6 text-center">아이디 찾기</h2>
                   <form class="space-y-4" action="{{ url_for('auth.find_id') }}" method="post" novalidate>
                   {{ form_find_id.csrf_token }}
+
                         <div class="form-floating">
-                        <input type="text" class="form-control dt-auth-input {% if form_find_id.user_name.errors %}is-invalid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom"   placeholder="" id="findIdUserName" name="user_name" placeholder="" required>
+                        <input type="text" class="form-control dt-auth-input {% if form_find_id.user_name.errors %}is-invalid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom"   
+                        value="{{ form_find_id.user_name.data or '' }}" placeholder="" id="findIdUserName" name="user_name" placeholder="" required>
                         <label for="findIdUserName" class="form-label">이름</label>
                               {% if form_find_id.user_name.errors %}
                               <div class="invalid-feedback">{{ form_find_id.user_name.errors[0] }}</div>
@@ -17,7 +25,8 @@
                               {% endif %}
                               </div>
                               <div class="form-floating">
-                              <input type="text" class="form-control dt-auth-input {% if form_find_id.phone_number.errors %}is-invalid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom"   placeholder="" id="findIdPhoneNumber" name="phone_number" required>
+                              <input type="text" class="form-control dt-auth-input {% if form_find_id.phone_number.errors %}is-invalid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom"   
+                              value="{{ form_find_id.phone_number.data or '' }}" placeholder="" id="findIdPhoneNumber" name="phone_number" required>
                               <label for="findIdPhoneNumber" class="form-label">전화번호</label>
                               {% if form_find_id.phone_number.errors %}
                               <div class="invalid-feedback">{{ form_find_id.phone_number.errors[0] }}</div>

@@ -9,6 +9,7 @@ from email import encoders
 from datetime import datetime
 import random
 import mimetypes
+import requests
 import os
 import re
 import uuid
@@ -476,7 +477,7 @@ def find_id():
         session['show_find_id_modal'] = True
         return redirect(url_for("auth.find_id"))
 
-    return render_template("auth/find_id.html", form=LoginForm(), form_find_id=FindIDForm(), form_pw=FindPasswordForm(), form_verify_code=VerifyCodeForm())
+    return render_template("auth/find_id.html", form=LoginForm(), form_find_id=form_find_id, form_pw=FindPasswordForm(), form_verify_code=VerifyCodeForm())
 
 @auth.route("/find_password", methods=["GET", "POST"])
 def find_password():
