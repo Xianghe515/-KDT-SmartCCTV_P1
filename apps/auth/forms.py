@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm  # type:ignore
-from wtforms import PasswordField, StringField, SubmitField, FieldList, FormField, HiddenField, FileField, TextAreaField  # type:ignore
+from wtforms import PasswordField, StringField, SubmitField, FieldList, FormField, HiddenField, FileField, TextAreaField, BooleanField  # type:ignore
 from wtforms.validators import DataRequired, Email, Length  # type:ignore
 from wtforms.validators import Regexp, Optional, ValidationError
 
@@ -228,3 +228,7 @@ class VerifyCodeForm(FlaskForm):
             ]
       )
       submit = SubmitField('인증')
+      
+class DeleteUserForm(FlaskForm):
+      confirm_delete = BooleanField('동의', validators=[DataRequired('계정 탈퇴에 동의해야 합니다.')])
+      submit = SubmitField('탈퇴')

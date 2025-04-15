@@ -17,7 +17,7 @@ import time
 import secrets
 from apps.app import db
 from apps.auth.forms import SupportForm
-from apps.auth.forms import LoginForm, SignUpForm, UpdateForm, PasswordForm, DeviceForm, SingleDeviceForm, SupportForm, FindIDForm, FindPasswordForm, VerifyCodeForm
+from apps.auth.forms import LoginForm, SignUpForm, UpdateForm, PasswordForm, DeviceForm, SingleDeviceForm, SupportForm, FindIDForm, FindPasswordForm, VerifyCodeForm, DeleteUserForm
 from apps.auth.models import User, Camera
 from apps.utils.EmailService import EmailService
 from kakaotalk.auth.kakao_api import KakaoAPI
@@ -559,13 +559,8 @@ def verify_code():
                 # 로그인 처리
                 login_user(user)  # 사용자 로그인 처리
                 
-                # process_type 세션으로 인증 상태 표시 (이걸로 modify_pw에서 구분!)
+                # process_type 세션으로 인증 상태 표시
                 session['process_type'] = 'reset_password'
-                # # 세션 클린업
-                # session.pop('reset_password_code', None)
-                # session.pop('reset_password_user_id', None)
-                # session.pop('reset_password_code_sent_at', None)
-                # session.pop('temp_password', None)
 
                 # 인증 후 바로 비밀번호 변경 페이지로 리다이렉트
                 return redirect(url_for("auth.modify_pw", user_id=user.id))
@@ -574,3 +569,35 @@ def verify_code():
 
     session['open_modal'] = 'verifyCodeModal'
     return redirect(url_for('auth.find_password'))
+
+@auth.route('/delete_user', methods=['GET', 'POST'])
+@login_required
+def delete_user():
+    form = DeleteUserForm()
+    if form.validate_on_submit():
+        if form.confirm_delete.data:  # 동의 체크박스가 선택되었는지 확인
+            try:
+                social_platform = current_user.social_platform
+                if social_platform == 'kakao':
+                    kakao_access_token = current_user.kakao_access_token
+                    unlink_url = 'https://kapi.kakao.com/v1/user/unlink'
+                    headers = {'Authorization': f'Bearer {kakao_access_token}'}
+                    response = requests.post(unlink_url, headers=headers)
+                    response.raise_for_status() # 에러 발생 시 예외 발생
+                    print(f"카카오 Unlink API 응답: {response.json()}")
+
+                db.session.delete(current_user)
+                db.session.commit()
+                logout_user()
+                flash('계정이 성공적으로 탈퇴되었습니다.', 'info')
+                return redirect(url_for("auth.login")) # 탈퇴 후 이동할 페이지
+            
+            except requests.exceptions.RequestException as e:
+                db.session.rollback()
+                flash(f'소셜 계정 연결 해제 중 오류가 발생했습니다: {e}', 'error')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'회원 탈퇴 처리 중 오류가 발생했습니다: {e}', 'error')
+        else:
+            flash('계정 탈퇴에 동의해야 합니다.', 'error')
+    return render_template('auth/delete_user.html', form=form)

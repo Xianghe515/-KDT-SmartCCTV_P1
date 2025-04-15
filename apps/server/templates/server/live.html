@@ -1,40 +1,53 @@
 {% extends "server/base.html" %}
 {% block title %}Video Streaming{% endblock %}
 {% block content %}
-<h1>Video Streaming Page</h1>
-<img src="{{ url_for('streaming.yolo_video', camera_id=camera_id) }}" class="rounded mx-auto d-block" alt="Video Stream" width="640" height="480" id="yolo-stream">
+<div class="relative w-fit mx-auto">
+    <img src="{{ url_for('streaming.yolo_video', camera_id=camera_id) }}" 
+         class="rounded mx-auto d-block" 
+         alt="Video Stream" 
+         width="640" 
+         height="480" 
+         id="yolo-stream">
 
-<div class="btn-group" role="group" aria-label="Basic example">
-    <button type="button" class="btn btn-primary">Left</button>
-    <button type="button" class="btn btn-primary">Middle</button>
-    <button type="button" class="btn btn-primary">Right</button>
-    <button id="fullscreen-btn" class="btn btn-secondary">전체화면</button>
-    <a href="{{ url_for('streaming.capture', camera_id=camera_id) }}" class="btn btn-success" target="_blank">캡처</a>
+    <!-- 버튼을 우측 하단에 위치시키고, 우상단이 이미지 우하단에 딱 맞게 -->
+    <button id="fullscreen-btn" 
+            style="
+                position: absolute;
+                bottom: 0;
+                right: 0;
+                transform: translate(-25%, -25%);
+                font-size: 9px;
+                text-align: center;
+            ">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#0569a1" class="bi bi-fullscreen" viewBox="0 0 16 16">
+                <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5M.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5"/>
+              </svg>
+              <p style="
+              position: absolute;
+              bottom: 0;
+              right: 0;
+              transform: translate(-7px, -15px);
+              font-size: 10px;
+              text-align: center;
+              ">
+                  전체
+              </p>
+              <p style="
+              position: absolute;
+              bottom: 0;
+              right: 0;
+              transform: translate(-7px, -3px);
+              font-size: 10px;
+              text-align: center;
+              ">
+                  화면
+              </p>
+            </button>
 </div>
 
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
-    Launch demo modal
-</button>
-
-<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <img src="{{ url_for('streaming.yolo_video', camera_id=camera_id) }}" class="rounded mx-auto d-block" alt="Video Stream" width="100%" >
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Save changes</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <script>
+
     // 전체 화면
     document.getElementById("fullscreen-btn").addEventListener("click", function () {
         let videoFrame = document.getElementById("yolo-stream");

@@ -13,7 +13,7 @@ from datetime import datetime
 from sqlalchemy import create_engine
 from flask_wtf.csrf import validate_csrf
 from apps.auth.forms import DeleteForm
-from apps.auth.models import Camera, Log, Video
+from apps.auth.models import Camera, Video
 from apps.app import db
 from apps.utils.VideoStream import VideoStream
 from apps.utils.Blur import Blur
@@ -160,7 +160,7 @@ def yolo_video(camera_id):
 
                 now = datetime.now()
                 current_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
-                cv.putText(img, current_time_str, (img.shape[1] - 280, img.shape[0] - 20),
+                cv.putText(img, current_time_str, (img.shape[1] - 630, img.shape[0] - 20),
                         cv.FONT_HERSHEY_DUPLEX, 0.7, (83, 115, 219), 2)
 
                 detected_this_frame = False
@@ -253,7 +253,7 @@ def yolo_video(camera_id):
 
                 # 카카오 메시지 전송
                 if social_platform == 'kakao':
-                    video_title = "배회자 감지"  # 실제 감지 제목 또는 원하는 메시지
+                    video_title = "감지"
                     save_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
                     message = f"[knockx2] {save_time}에 {video_title} 되었습니다!"
                     kakao_token = current_user.kakao_access_token
@@ -338,52 +338,52 @@ def streaming_page(camera_id):
     return render_template("server/live.html", camera_id=camera_id)
 
 
-@streaming.route("/live/<camera_id>/capture")
-def capture(camera_id):
-    user_id = current_user.id
-    cam = Camera.query.filter_by(user_id=user_id, camera_id=camera_id).first()
-    if not cam:
-        return "등록된 기기가 없습니다."
-    ip_address = cam.ip_address
-    stream_url = f"http://{ip_address}:8000/"
+# @streaming.route("/live/<camera_id>/capture")
+# def capture(camera_id):
+#     user_id = current_user.id
+#     cam = Camera.query.filter_by(user_id=user_id, camera_id=camera_id).first()
+#     if not cam:
+#         return "등록된 기기가 없습니다."
+#     ip_address = cam.ip_address
+#     stream_url = f"http://{ip_address}:8000/"
 
-    ncnn_model = YOLO("./yolo11/yolo11n_ncnn_model")
-    colors = np.random.uniform(0, 255, size=(len(ncnn_model.names), 3))
+#     ncnn_model = YOLO("./yolo11/yolo11n_ncnn_model")
+#     colors = np.random.uniform(0, 255, size=(len(ncnn_model.names), 3))
 
-    cap = cv.VideoCapture(stream_url)
-    if not cap.isOpened():
-        return "스트림을 열 수 없습니다."
+#     cap = cv.VideoCapture(stream_url)
+#     if not cap.isOpened():
+#         return "스트림을 열 수 없습니다."
 
-    ret, frame = cap.read()
-    cap.release()
-    if not ret:
-        return "프레임을 읽을 수 없습니다."
+#     ret, frame = cap.read()
+#     cap.release()
+#     if not ret:
+#         return "프레임을 읽을 수 없습니다."
 
-    img = frame.copy()
-    results = ncnn_model(img)
+#     img = frame.copy()
+#     results = ncnn_model(img)
 
-    for result in results:
-        for box in result.boxes:
-            x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
-            conf = box.conf[0].item()
-            cls = box.cls[0].item()
-            class_name = ncnn_model.names[int(cls)]
+#     for result in results:
+#         for box in result.boxes:
+#             x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+#             conf = box.conf[0].item()
+#             cls = box.cls[0].item()
+#             class_name = ncnn_model.names[int(cls)]
 
-            if conf >= 0.4:
-                color = colors[int(cls)]
-                cv.rectangle(img, (int(x1), int(y1)), (int(x2), int(y2)), color, 3)
-                cv.putText(
-                    img,
-                    f"{class_name} {conf:.2f}",
-                    (int(x1), int(y1) - 10),
-                    cv.FONT_HERSHEY_SIMPLEX,
-                    0.8,
-                    color,
-                    3,
-                )
+#             if conf >= 0.4:
+#                 color = colors[int(cls)]
+#                 cv.rectangle(img, (int(x1), int(y1)), (int(x2), int(y2)), color, 3)
+#                 cv.putText(
+#                     img,
+#                     f"{class_name} {conf:.2f}",
+#                     (int(x1), int(y1) - 10),
+#                     cv.FONT_HERSHEY_SIMPLEX,
+#                     0.8,
+#                     color,
+#                     3,
+#                 )
 
-    _, buffer = cv.imencode('.jpg', img)
-    return Response(buffer.tobytes(), mimetype="image/jpeg")
+#     _, buffer = cv.imencode('.jpg', img)
+#     return Response(buffer.tobytes(), mimetype="image/jpeg")
 
 
 @streaming.route("/videos", methods=["GET"])
