@@ -35,7 +35,7 @@ streaming = Blueprint(
 )
 
 VIDEO_STORAGE_PATH = "./apps/server/static/videos"  # 저장할 비디오 폴더 경로
-BLURRED_SAVE_PATH = "D:\\kim\\Yolo11\\apps\\server\\static\\blurred"
+BLURRED_SAVE_PATH = "./apps/server/static/blurred"
 
 """앱 컨텍스트 유지 못하는 문제 stream_with_context로 해결함 -> session 명시할 필요 없어졌음"""
 # from sqlalchemy.orm import scoped_session, sessionmaker
