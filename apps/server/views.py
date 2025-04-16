@@ -13,7 +13,7 @@ from datetime import datetime
 from sqlalchemy import create_engine
 from flask_wtf.csrf import validate_csrf
 from apps.auth.forms import DeleteForm
-from apps.auth.models import Camera, Log, Video
+from apps.auth.models import Camera, Video
 from apps.app import db
 from apps.utils.VideoStream import VideoStream
 from apps.utils.Blur import Blur
@@ -161,7 +161,7 @@ def yolo_video(camera_id):
 
                 now = datetime.now()
                 current_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
-                cv.putText(img, current_time_str, (img.shape[1] - 280, img.shape[0] - 20),
+                cv.putText(img, current_time_str, (img.shape[1] - 630, img.shape[0] - 20),
                         cv.FONT_HERSHEY_DUPLEX, 0.7, (83, 115, 219), 2)
 
                 detected_this_frame = False
@@ -254,7 +254,7 @@ def yolo_video(camera_id):
 
                 # 카카오 메시지 전송
                 if social_platform == 'kakao':
-                    video_title = "배회자 감지"  # 실제 감지 제목 또는 원하는 메시지
+                    video_title = "감지"
                     save_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
                     message = f"[knockx2] {save_time}에 {video_title} 되었습니다!"
                     kakao_token = current_user.kakao_access_token
@@ -265,10 +265,47 @@ def yolo_video(camera_id):
                     if email_service:
                         subject_text = "[Knockx2] 객체 감지 알림"
                         body_text = f"""
-사용자: {user_name}
-카메라 ID: {camera_id}
-감지 시간: {created_at.strftime('%Y-%m-%d %H:%M:%S')}
-감지 객체: {", ".join(set(detected_names))}
+                        <html>
+                            <body style="font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 0;">
+                                <table role="presentation" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+                                    <tr>
+                                        <td style="padding-bottom: 20px; text-align: center;">
+                                            <h2 style="color: #333333; font-size: 24px;">[Knockx2] 객체 감지 알림</h2>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 10px; color: #555555;">
+                                            <strong>사용자:</strong><br>
+                                            <span style="color: #333333;">{user_name}</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 10px; color: #555555;">
+                                            <strong>카메라 ID:</strong><br>
+                                            <span style="color: #333333;">{camera_id}</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 10px; color: #555555;">
+                                            <strong>감지 시간:</strong><br>
+                                            <span style="color: #333333;">{created_at.strftime('%Y-%m-%d %H:%M:%S')}</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding-bottom: 20px; color: #555555;">
+                                            <strong>감지 객체:</strong><br>
+                                            <span style="color: #333333;">{', '.join(set(detected_names))}</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="text-align: center; color: #777777; font-size: 14px;">
+                                            <p>감지된 객체에 대한 알림을 드립니다.</p>
+                                            <p>추가적인 정보가 필요하시면 문의해 주세요.</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </body>
+                        </html>
                         """.strip()
 
                         try:
@@ -302,52 +339,52 @@ def streaming_page(camera_id):
     return render_template("server/live.html", camera_id=camera_id)
 
 
-@streaming.route("/live/<camera_id>/capture")
-def capture(camera_id):
-    user_id = current_user.id
-    cam = Camera.query.filter_by(user_id=user_id, camera_id=camera_id).first()
-    if not cam:
-        return "등록된 기기가 없습니다."
-    ip_address = cam.ip_address
-    stream_url = f"http://{ip_address}:8000/"
+# @streaming.route("/live/<camera_id>/capture")
+# def capture(camera_id):
+#     user_id = current_user.id
+#     cam = Camera.query.filter_by(user_id=user_id, camera_id=camera_id).first()
+#     if not cam:
+#         return "등록된 기기가 없습니다."
+#     ip_address = cam.ip_address
+#     stream_url = f"http://{ip_address}:8000/"
 
-    ncnn_model = YOLO("./yolo11/yolo11n_ncnn_model")
-    colors = np.random.uniform(0, 255, size=(len(ncnn_model.names), 3))
+#     ncnn_model = YOLO("./yolo11/yolo11n_ncnn_model")
+#     colors = np.random.uniform(0, 255, size=(len(ncnn_model.names), 3))
 
-    cap = cv.VideoCapture(stream_url)
-    if not cap.isOpened():
-        return "스트림을 열 수 없습니다."
+#     cap = cv.VideoCapture(stream_url)
+#     if not cap.isOpened():
+#         return "스트림을 열 수 없습니다."
 
-    ret, frame = cap.read()
-    cap.release()
-    if not ret:
-        return "프레임을 읽을 수 없습니다."
+#     ret, frame = cap.read()
+#     cap.release()
+#     if not ret:
+#         return "프레임을 읽을 수 없습니다."
 
-    img = frame.copy()
-    results = ncnn_model(img)
+#     img = frame.copy()
+#     results = ncnn_model(img)
 
-    for result in results:
-        for box in result.boxes:
-            x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
-            conf = box.conf[0].item()
-            cls = box.cls[0].item()
-            class_name = ncnn_model.names[int(cls)]
+#     for result in results:
+#         for box in result.boxes:
+#             x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+#             conf = box.conf[0].item()
+#             cls = box.cls[0].item()
+#             class_name = ncnn_model.names[int(cls)]
 
-            if conf >= 0.4:
-                color = colors[int(cls)]
-                cv.rectangle(img, (int(x1), int(y1)), (int(x2), int(y2)), color, 3)
-                cv.putText(
-                    img,
-                    f"{class_name} {conf:.2f}",
-                    (int(x1), int(y1) - 10),
-                    cv.FONT_HERSHEY_SIMPLEX,
-                    0.8,
-                    color,
-                    3,
-                )
+#             if conf >= 0.4:
+#                 color = colors[int(cls)]
+#                 cv.rectangle(img, (int(x1), int(y1)), (int(x2), int(y2)), color, 3)
+#                 cv.putText(
+#                     img,
+#                     f"{class_name} {conf:.2f}",
+#                     (int(x1), int(y1) - 10),
+#                     cv.FONT_HERSHEY_SIMPLEX,
+#                     0.8,
+#                     color,
+#                     3,
+#                 )
 
-    _, buffer = cv.imencode('.jpg', img)
-    return Response(buffer.tobytes(), mimetype="image/jpeg")
+#     _, buffer = cv.imencode('.jpg', img)
+#     return Response(buffer.tobytes(), mimetype="image/jpeg")
 
 
 @streaming.route("/videos", methods=["GET"])

@@ -1,10 +1,15 @@
 {% extends "server/base.html" %}
   {% block content %}
 
-  <div class="relative flex h-[600px] bg-gray-100">
-
-    <div class="absolute inset-0 flex items-center justify-end pr-24">
-      <div class="w-96 p-8 bg-white rounded-lg shadow-lg">
+  <div class="relative flex h-[600px]">
+    <div class="bg_video">
+        <video autoplay muted loop playsinline>
+          <source src="{{ url_for('static', filename='../static/images/식물3.mp4') }}" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+    <div class="absolute inset-0 flex items-center justify-center">
+      <div class="w-96 p-8 bg-white rounded-lg shadow-lg" style="overflow-y: auto; max-height: 580px;">
         <h2 class="text-2xl font-bold mb-6 text-center">1:1 문의</h2>
 <form action="{{ url_for('auth.support') }}">
 
@@ -103,7 +108,7 @@
             name="text"
             value="{{ form.text.data or ''}}"
             placeholder="문의 사항"
-            style="height: 200px;"
+            style="height: 180px;"
           ></textarea>
           {% if form.text.errors %}
           <div class="invalid-feedback">{{ form.text.errors[0] }}</div>

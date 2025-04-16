@@ -1,9 +1,15 @@
 {% extends "server/base.html" %}
   {% block content %}
 
-  <div class="relative flex h-[600px] bg-gray-100">
+  <div class="relative flex h-[600px]">
+    <div class="bg_video">
+        <video autoplay muted loop playsinline>
+          <source src="{{ url_for('static', filename='../static/images/식물3.mp4') }}" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
 
-    <div class="absolute inset-0 flex items-center justify-end pr-24">
+    <div class="absolute inset-0 flex items-center justify-center">
       <div class="w-96 p-8 bg-white rounded-lg shadow-lg">
         <h2 class="text-2xl font-bold mb-6 text-center">비밀번호 변경</h2>
 <section>
@@ -12,14 +18,18 @@
     method="POST"
     novalidate="novalidate"
   >
+  {{ form.hidden_tag() }}
   {% for message in get_flashed_messages() %}
   <span class="dt-auth-flash">{{  message  }}</span>
   {% endfor %}
   {{ form.csrf_token}}
 
   <div class="form-floating">
-    <input type="password" class="form-custom form-control dt-auth-input {% if form.current_password.errors %}is-invalid{% elif form.current_password.data %}is-valid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
-           id="floatingCurrentPassword" name="current_password" value="{{ form.current_password.data or ''}}" placeholder="">
+    <input type="password" class="form-custom form-control dt-auth-input {% if form.current_password.errors %}is-invalid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
+    id="{{ form.current_password.id }}" name="{{ form.current_password.name }}" value="{{ form.current_password.data or '' }}" placeholder=""
+    {% if form.current_password.disabled %} disabled {% endif %} required>
+    <!-- 임시 비밀번호를 사용자의 현재 비밀번호로 설정 -->
+    <input type="hidden" name="current_password" value="{{ form.current_password.data or session.get('temp_password') }}">
     <label for="floatingCurrentPassword">현재 비밀번호 <span style="color: red;">*</span></label>
     {% if form.current_password.errors %}
         <div class="invalid-feedback">
@@ -29,8 +39,8 @@
 </div>
 
   <div class="form-floating">
-    <input type="password" class="form-custom form-control dt-auth-input {% if form.new_password.errors %}is-invalid{% elif form.new_password.data %}is-valid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
-           id="floatingNewPassword" name="new_password" value="{{ form.new_password.data or ''}}" placeholder="">
+    <input type="password" class="form-custom form-control dt-auth-input {% if form.new_password.errors %}is-invalid{% endif %} w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-custom focus:border-custom" 
+           id="floatingNewPassword" name="new_password" placeholder="">
     <label for="floatingNewPassword">새 비밀번호 <span style="color: red;">*</span></label>
     {% if form.new_password.errors %}
         <div class="invalid-feedback">

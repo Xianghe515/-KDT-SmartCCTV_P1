@@ -1,4 +1,4 @@
-from flask import Blueprint, flash, redirect, render_template, request, url_for, current_app
+from flask import Blueprint, flash, redirect, render_template, request, url_for, current_app, session
 from flask_login import login_required, current_user, login_user, logout_user   # type: ignore
 from werkzeug.security import generate_password_hash, check_password_hash
 from email.header import Header
@@ -7,14 +7,18 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
 from datetime import datetime
+import random
 import mimetypes
+import requests
 import os
 import re
 import uuid
 import smtplib
+import time
+import secrets
 from apps.app import db
 from apps.auth.forms import SupportForm
-from apps.auth.forms import LoginForm, SignUpForm, UpdateForm, PasswordForm, DeviceForm, SingleDeviceForm, SupportForm
+from apps.auth.forms import LoginForm, SignUpForm, UpdateForm, PasswordForm, DeviceForm, SingleDeviceForm, SupportForm, FindIDForm, FindPasswordForm, VerifyCodeForm, DeleteUserForm
 from apps.auth.models import User, Camera
 from apps.utils.EmailService import EmailService
 from kakaotalk.auth.kakao_api import KakaoAPI
@@ -88,7 +92,7 @@ def login():
             # 로그인 실패 메시지 설정
             flash("메일 주소 또는 비밀번호가 일치하지 않습니다.")
             
-      return render_template("auth/login.html", form=form, active_page='login')
+      return render_template("auth/login.html", form=LoginForm(), form_find_id = FindIDForm(), form_pw=FindPasswordForm(), form_verify_code=VerifyCodeForm(), active_page='login')
 
 @auth.route("/<user_id>")
 @login_required
@@ -118,31 +122,51 @@ def update(user_id):
 @auth.route("/<user_id>/modify_pw", methods=["GET", "POST"])
 @login_required
 def modify_pw(user_id):
-      form = PasswordForm()
-      user = User.query.get(user_id)
-      if not user:
-            flash("해당 사용자를 찾을 수 없습니다.")
-            return redirect(url_for("auth.info", user_id=user_id))  # 이 부분에서 user_id를 제대로 전달
+    form = PasswordForm()
+    user = User.query.get(user_id)
+    if not user:
+        flash("해당 사용자를 찾을 수 없습니다.")
+        return redirect(url_for("auth.info", user_id=user_id))
 
-      if form.validate_on_submit():  # 폼 제출 및 유효성 검증
-            # user.password = form.current_password.data
-            
+    if current_user.social_platform == "kakao":
+        flash("카카오톡 로그인 사용자는 비밀번호를 변경할 수 없습니다.", "danger")
+        return redirect(url_for("auth.info", user_id=user_id))
+
+    # process_type이 'reset_password'인 경우 비밀번호 변경 처리
+    if session.get('process_type') == 'reset_password':
+        # 임시 비밀번호를 입력 필드에 자동으로 채워넣고 disabled 처리
+        form.current_password.data = session.get('temp_password')  # 임시 비밀번호 할당
+        form.current_password.disabled = True  # 사용자가 수정할 수 없도록 disabled 설정
+        if form.validate_on_submit():
+            # 새 비밀번호 설정
+            user.password_hash = generate_password_hash(form.new_password.data)
+            db.session.commit()
+
+            flash("비밀번호가 성공적으로 변경되었습니다.", "info")
+            session.pop('process_type', None)  # 비밀번호 변경 후 프로세스 타입 초기화
+            session.pop('temp_password', None)  # 임시 비밀번호도 세션에서 삭제
+            return redirect(url_for("auth.login"))
+
+    else:
+    
+        # 기존 사용자의 비밀번호 변경
+        if form.validate_on_submit():
             # 현재 비밀번호 확인
             if not check_password_hash(user.password_hash, form.current_password.data):
-                  flash("현재 비밀번호가 일치하지 않습니다.")
-                  return render_template("auth/modify_pw.html", user=user, form=form)
+                flash("현재 비밀번호가 일치하지 않습니다.")
+                return render_template("auth/modify_pw.html", user=user, form=form)
 
             # 비밀번호 업데이트
-            else:
-                  user.password = form.new_password.data
-                  user.password_hash = generate_password_hash(form.new_password.data)
+            user.password_hash = generate_password_hash(form.new_password.data)
+            db.session.commit()
 
-                  db.session.commit()
-
-        # 수정 후 info 페이지로 리다이렉트
+            flash("비밀번호가 성공적으로 변경되었습니다.", "info")
+            session.pop('process_type', None)
             return redirect(url_for("auth.info", user_id=user.id))  # user.id로 user_id를 전달
 
-      return render_template("auth/modify_pw.html", user=user, form=form)
+    return render_template("auth/modify_pw.html", user=user, form=form)
+
+
 
 @auth.route("/users/<user_id>/register_device", methods=["GET", "POST"])
 @login_required
@@ -245,8 +269,8 @@ def logout():
             unlink_result = kakao_api.kakao_logout(access_token)  # kakao_api의 연결 해제 함수 사용
             print(f"카카오 연결 해제 결과: {unlink_result}")
             if unlink_result.get('id') == user.kakao_user_id:
+                # user.social_platform = None  # 소셜 플랫폼 정보 삭제
                 user.kakao_access_token = None  # Access Token 삭제
-                user.social_platform = None  # 소셜 플랫폼 정보 삭제
                 user.kakao_user_id = None # 카카오 User ID 삭제
                 db.session.commit()
                 logout_user()
@@ -288,7 +312,7 @@ def kakao_callback():
                         # 기존 카카오 계정으로 가입된 사용자
                         login_user(user, remember=False)  # 자동 로그인 방지
                         user.kakao_user_id=kakao_id,
-                        user.social_platform='kakao',
+                        # user.social_platform='kakao',
                         user.kakao_access_token=access_token
                         db.session.commit()
                         return redirect(url_for("streaming.home"))
@@ -306,7 +330,8 @@ def kakao_callback():
                         db.session.add(new_user)
                         db.session.commit()
                         login_user(new_user, remember=False)  # 자동 로그인 방지
-                        return redirect(url_for("streaming.home"))
+                        flash("전화번호는 필수입니다.", "danger")
+                        return redirect(url_for("auth.update", user_id=current_user.id))
                 else:
                     flash("카카오 로그인 실패: 사용자 정보를 가져오지 못했습니다.", "danger")
                     return redirect(url_for("auth.login"))
@@ -364,20 +389,53 @@ def support():
                 save_path = None
 
             subject_text = f"[문의 접수 완료] {title}"
-            body_text = f"""문의 제목: {title}
-이메일: {email}
-내용:
-{text}
-
-첨부파일 : {ascii_filename if ascii_filename else original_filename if original_filename else '없음'}
-
-빠른 시일 내에 답변 드리도록 하겠습니다.
-이용에 불편을 드려 죄송합니다.
-                """.strip()
+            html_body = f"""
+            <html>
+                <body style="font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 0;">
+                    <table role="presentation" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+                        <tr>
+                            <td style="padding-bottom: 20px; text-align: center;">
+                                <h2 style="color: #333333; font-size: 24px;">문의 내용</h2>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding-bottom: 10px; color: #555555;">
+                                <strong>문의 제목:</strong><br>
+                                <span style="color: #333333;">{title}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding-bottom: 10px; color: #555555;">
+                                <strong>이메일:</strong><br>
+                                <span style="color: #333333;">{email}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding-bottom: 20px; color: #555555;">
+                                <strong>내용:</strong><br>
+                                <span style="color: #333333;">{text}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding-bottom: 20px; color: #555555;">
+                                <strong>첨부파일:</strong><br>
+                                <span style="color: #333333;">{ascii_filename if ascii_filename else original_filename if original_filename else '없음'}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: center; color: #777777; font-size: 14px;">
+                                <p>빠른 시일 내에 답변 드리도록 하겠습니다.</p>
+                                <p>이용에 불편을 드려 죄송합니다.</p>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+            </html>
+            """.strip()
 
             try:
                 # EmailService를 사용하여 이메일 전송
-                if email_service.send_email(email, subject_text, body_text, save_path, ascii_filename if ascii_filename else original_filename):
+                if email_service.send_email(email, subject_text, html_body, save_path, ascii_filename if ascii_filename else original_filename):
                     flash("문의가 접수되었으며 확인 메일을 전송했습니다.", "success")
                 else:
                     flash("문의는 접수되었지만 이메일 전송에 실패했습니다.", "warning")
@@ -395,14 +453,140 @@ def support():
 
     return render_template("auth/support.html", form=form, active_page='support', user=user)
 
-import requests
+@auth.route("/find_id", methods=["GET", "POST"])
+def find_id():
+    form_find_id = FindIDForm()
+
+    if form_find_id.validate_on_submit():
+        search_user_name = form_find_id.user_name.data
+        search_phone_number = form_find_id.phone_number.data
+
+        user = User.query.filter_by(user_name=search_user_name, phone_number=search_phone_number).first()
+
+        if user:
+            email = user.email
+            at_index = email.find('@')
+            prefix = email[:2]
+            suffix = email[at_index - 2:]
+            middle = "*" * (len(email) - len(prefix) - len(suffix))
+            masked_email = prefix + middle + suffix
+            session['masked_email'] = masked_email
+        else:
+            session['not_found'] = True
+            
+        # 모달 열도록 지시
+        session['show_find_id_modal'] = True
+        return redirect(url_for("auth.find_id"))
+
+    return render_template("auth/find_id.html", form=LoginForm(), form_find_id=form_find_id, form_pw=FindPasswordForm(), form_verify_code=VerifyCodeForm())
+
+@auth.route("/find_password", methods=["GET", "POST"])
+def find_password():
+    form_pw = FindPasswordForm()
+    sender_email = current_app.config['MAIL_USERNAME']
+    sender_password = current_app.config['MAIL_PASSWORD']
+    email_service = EmailService(sender_email, sender_password)
+    
+    if form_pw.validate_on_submit():
+        search_user_name = form_pw.user_name.data
+        search_phone_number = form_pw.phone_number.data
+        search_email = form_pw.email.data
+
+        user = User.query.filter_by(
+            email=search_email,
+            user_name=search_user_name,
+            phone_number=search_phone_number
+        ).first()
+
+        if not user:
+            flash("입력하신 정보와 일치하는 사용자를 찾을 수 없습니다.", "danger")
+            return redirect(url_for("auth.find_password"))
+        
+        # 카카오 사용자라면 차단
+        if user.social_platform == 'kakao':
+            flash("카카오톡 로그인 사용자입니다.", "danger")
+            return redirect(url_for("auth.login"))
+
+        # 인증번호 + 임시 비밀번호 생성
+        verification_code = str(secrets.randbelow(900000) + 100000)
+        temp_password = secrets.token_urlsafe(8)
+
+        session['process_type'] = 'reset_password'
+        session['reset_password_code'] = verification_code
+        session['reset_password_user_id'] = user.id
+        session['reset_password_code_sent_at'] = time.time()
+        session['temp_password'] = temp_password  # 임시 비밀번호
+
+        # 이메일 발송
+        subject_text = "[Knockx2] 비밀번호 재설정 인증번호"
+        body_text = f"""
+<html>
+<body style="font-family: sans-serif; line-height: 1.6;">
+    <div style="text-align: center;">
+        <h3">인증번호</h3>
+        <div style="display: inline-block; border: 2px solid #0D1B2A; padding: 10px 20px; border-radius: 8px;">
+            <h1 style="margin: 0; font-size: 1.5em; color: #0D1B2A;"><strong style="font-size: inherit;">{verification_code}</strong></h1>
+        </div>
+        <hr>
+        <p>5분 이내에 인증을 완료해주세요.</p>
+    </div>
+</body>
+</html>
+"""
+
+        email_service.send_email(search_email, subject_text, body_text)
+
+        session['show_find_pw_modal'] = True
+        return redirect(url_for("auth.find_password"))
+
+    # 모달은 조건 없이 띄우지 않도록
+    return render_template("auth/find_password.html",
+                           form=LoginForm(),
+                           form_find_id=FindIDForm(),
+                           form_pw=form_pw,
+                           form_verify_code=VerifyCodeForm())
+
+@auth.route('/verify_code', methods=['POST'])
+def verify_code():
+    form_verify_code = VerifyCodeForm(request.form)
+
+    if form_verify_code.validate_on_submit():
+        entered_code = form_verify_code.code.data
+        stored_code = session.get('reset_password_code')
+        stored_user_id = session.get('reset_password_user_id')
+        sent_time = session.get('reset_password_code_sent_at')
+        temp_password = session.get('temp_password')
+
+        if (
+            entered_code == stored_code and stored_user_id and sent_time and temp_password and
+            (time.time() - sent_time < 300)
+        ):
+            user = User.query.get(stored_user_id)
+            if user:
+                # 비밀번호 해시화 후 저장
+                user.password_hash = generate_password_hash(temp_password)
+                db.session.commit()
+
+                # 로그인 처리
+                login_user(user)  # 사용자 로그인 처리
+                
+                # process_type 세션으로 인증 상태 표시
+                session['process_type'] = 'reset_password'
+
+                # 인증 후 바로 비밀번호 변경 페이지로 리다이렉트
+                return redirect(url_for("auth.modify_pw", user_id=user.id))
+
+        flash('인증번호가 일치하지 않거나 유효 시간이 만료되었습니다.', 'danger')
+
+    session['open_modal'] = 'verifyCodeModal'
+    return redirect(url_for('auth.find_password'))
 
 @auth.route('/delete_user', methods=['GET', 'POST'])
 @login_required
 def delete_user():
     form = DeleteUserForm()
     if form.validate_on_submit():
-        if form.confirm_delete.data:
+        if form.confirm_delete.data:  # 동의 체크박스가 선택되었는지 확인
             try:
                 social_platform = current_user.social_platform
                 if social_platform == 'kakao':
@@ -417,7 +601,8 @@ def delete_user():
                 db.session.commit()
                 logout_user()
                 flash('계정이 성공적으로 탈퇴되었습니다.', 'info')
-                return redirect(url_for("auth.login"))
+                return redirect(url_for("auth.login")) # 탈퇴 후 이동할 페이지
+            
             except requests.exceptions.RequestException as e:
                 db.session.rollback()
                 flash(f'소셜 계정 연결 해제 중 오류가 발생했습니다: {e}', 'error')

@@ -73,18 +73,6 @@ class Video(db.Model):
 
     def __repr__(self):
         return f"<Video {self.video_id}>"
-
-# Logs 모델
-class Log(db.Model):
-    __tablename__ = "Logs"
-
-    log_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("Users.id"))
-    action = db.Column(db.String(255))
-    action_time = db.Column(db.DateTime, default=datetime.now(timezone.utc))
-
-    def __repr__(self):
-        return f"<Log {self.log_id}>"
     
 class Camera(db.Model):
     __tablename__ = "Cameras"

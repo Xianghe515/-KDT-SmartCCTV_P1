@@ -83,6 +83,7 @@ class UpdateForm(FlaskForm):
       phone_number = StringField(
             "전화번호",
             validators=[
+                  DataRequired("전화번호는 필수입니다."),
                   Regexp(
                         r"^\d{3}-\d{4}-\d{4}$",
                         message="010-0000-0000 형식으로 입력해주세요."
@@ -173,6 +174,61 @@ class SupportForm(FlaskForm):
       )
       file = FileField("첨부파일")  # 선택 사항
       
+class FindIDForm(FlaskForm):
+      user_name = StringField(
+      "사용자명",
+      validators=[
+            DataRequired("사용자명은 필수입니다."),
+            Length(2, 30, "2문자 이상, 30문자 이내로 입력해주세요."),
+      ],
+      )
+      phone_number = StringField(
+            "전화번호",
+            validators=[
+                  DataRequired("전화번호는 필수입니다."),
+                  Regexp(
+                        r"^\d{3}-\d{4}-\d{4}$",
+                        message="000-0000-0000 형식으로 입력해주세요."
+                        ),
+      ],
+      )
+class FindPasswordForm(FlaskForm):
+      user_name = StringField(
+      "사용자명",
+      validators=[
+            DataRequired("사용자명은 필수입니다."),
+            Length(2, 30, "2문자 이상, 30문자 이내로 입력해주세요."),
+      ],
+      )
+      phone_number = StringField(
+            "전화번호",
+            validators=[
+                  DataRequired("전화번호는 필수입니다."),
+                  Regexp(
+                        r"^\d{3}-\d{4}-\d{4}$",
+                        message="000-0000-0000 형식으로 입력해주세요."
+                        ),
+      ],
+      )
+      email = StringField(
+                  "메일 주소",
+      validators=[
+            DataRequired("메일 주소는 필수입니다."),
+            Email("메일 주소의 형식으로 입력해주세요."),
+      ],
+      ) 
+      submit = SubmitField('인증번호 발송')
+      
+class VerifyCodeForm(FlaskForm):
+      code = StringField(
+            '인증번호', 
+            validators=[
+                  DataRequired(), 
+                  Length(min=6, max=6)
+            ]
+      )
+      submit = SubmitField('인증')
+      
 class DeleteUserForm(FlaskForm):
-    confirm_delete = BooleanField('동의', validators=[DataRequired('계정 탈퇴에 동의해야 합니다.')])
-    submit = SubmitField('탈퇴')
+      confirm_delete = BooleanField('동의', validators=[DataRequired('계정 탈퇴에 동의해야 합니다.')])
+      submit = SubmitField('탈퇴')

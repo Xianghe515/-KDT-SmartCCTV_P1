@@ -140,7 +140,7 @@ node_modules/
 package-lock.json
 package.json
 apps/server/static/videos
-*.mp4
+apps/server/static/blurred
 uploads/
 
 # Spyder project settings

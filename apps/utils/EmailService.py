@@ -20,8 +20,8 @@ class EmailService:
         msg['From'] = current_app.config['MAIL_DEFAULT_SENDER']
         msg['To'] = recipient_email
 
-        # 본문 추가
-        msg.attach(MIMEText(body.encode('utf-8'), 'plain', 'utf-8'))
+        # HTML 본문 추가
+        msg.attach(MIMEText(body, 'html', 'utf-8'))  # MIMEText로 'html'을 사용
 
         # 첨부파일 (옵션)
         if save_path and original_filename:
