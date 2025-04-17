@@ -11,14 +11,14 @@
 <div class="position-fixed top-10 p-3 toasty" style="z-index: 1055;" id="toast-container"></div>
 <form class="d-flex justify-content-center" role="search" method="GET" action="{{ url_for('streaming.video_storage') }}">
   <div class="d-flex align-items-center btn rounded-md border-sky-700 hover:border-sky-700 text-gray-500" style="height: 35px; margin: 0;">
-    <input type="text" id="datepicker1" name="start_date" class="border-0 bg-[#f9fafb]" value="{{ request.args.get('start_date', '') }}" style="width: 90px; margin: 0; padding: 0; text-align: center;" placeholder="시작일" autocomplete="off">
+    <input type="text" id="datepicker1" name="start_date" class="border-0 bg-[#f2f4f800]" value="{{ request.args.get('start_date', '') }}" style="width: 90px; margin: 0; padding: 0; text-align: center;" placeholder="시작일" autocomplete="off">
     <p>~</p>
-    <input type="text" id="datepicker2" name="end_date" class="border-0 bg-[#f9fafb]" value="{{ request.args.get('end_date', '') }}" style="width: 90px; margin: 0; padding: 0; text-align: center;" placeholder="종료일" autocomplete="off">
+    <input type="text" id="datepicker2" name="end_date" class="border-0 bg-[#f2f4f800]" value="{{ request.args.get('end_date', '') }}" style="width: 90px; margin: 0; padding: 0; text-align: center;" placeholder="종료일" autocomplete="off">
   </div>
   <div class="d-flex btn dt-auth-btn rounded-md border-sky-700 hover:border-sky-700" id="search-box" style="height: 35px; padding: 0; margin: 0;">
     <input type="search" class="dt-auth-input px-3 py-2 border-none rounded-md focus:ring-0 focus:border-none" id="search" name="label" value="{{ request.args.get('label', '') }}" placeholder="검색" style="width: 200px; margin: 0; padding: 0;" />
     <div id="search-button-box">
-      <button id="search-button" class="btn dt-auth-btn bg-[#f9fafb] text-[#0569a1] py-2" type="submit" style="height: 35px; margin: 0;">
+      <button id="search-button" class="btn dt-auth-btn bg-[#f2f4f8] text-[#0569a1] py-2" type="submit" style="height: 35px; margin: 0;">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
           <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
         </svg>

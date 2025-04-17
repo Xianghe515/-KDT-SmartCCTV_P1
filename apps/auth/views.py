@@ -471,6 +471,10 @@ def find_id():
             middle = "*" * (len(email) - len(prefix) - len(suffix))
             masked_email = prefix + middle + suffix
             session['masked_email'] = masked_email
+            if user.social_platform == 'kakao':
+                session['kakao'] = True
+            else:
+                session['kakao'] = False
         else:
             session['not_found'] = True
             

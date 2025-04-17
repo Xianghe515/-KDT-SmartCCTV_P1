@@ -11,8 +11,8 @@
   
   .bg_video video {
     position: absolute;
-    top: 43%;
-    left: 51%;
+    top: 35%;
+    left: 49%;
     min-width: 100%;
     min-height: 100%;
     transform: translate(-50%, -50%);
@@ -253,13 +253,16 @@ label::after {
 }
 
 #search {
-    background-color: #f9fafb;
+    background-color: #f2f4f800;
     border-top-right-radius: 0% !important;
     border-bottom-right-radius: 0% !important;
 }
 #search-box {
     padding: 0% !important;
     width: fit-content;
+}
+.datepicker{
+    background-color: #f2f4f800;
 }
 #search-box:focus {
     border: #0569a1 !important;
